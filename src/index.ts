@@ -1,16 +1,34 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
+
+import { Command } from "commander";
+import { registerTestcaseCommand } from "./commands/testcase";
+import { logger } from "./utils/logger";
 
 /**
- * Zephyr CLI - Command-line interface for Zephyr Scale API
+ * Main CLI entry point
  */
+function main() {
+  const program = new Command();
 
-console.log("Zephyr CLI v0.1.0");
-console.log("Welcome to Zephyr Scale CLI!");
+  program
+    .name("zephyr")
+    .description("CLI tool for Zephyr Scale API")
+    .version("0.1.0")
+    .option("-p, --profile <name>", "Profile name to use", "default")
+    .option("-c, --config <path>", "Custom configuration file path")
+    .option("-f, --format <format>", "Output format (json or text)", "json");
 
-// Temporary test to ensure the environment is working
-const args = process.argv.slice(2);
-if (args.length > 0) {
-  console.log("Arguments:", args);
-} else {
-  console.log("No arguments provided. Try 'zephyr --help'");
+  // Register commands
+  registerTestcaseCommand(program);
+
+  // Parse arguments
+  program.parse(process.argv);
+}
+
+// Run the CLI
+try {
+  main();
+} catch (error) {
+  logger.error(`Unexpected error: ${error instanceof Error ? error.message : "Unknown error"}`);
+  process.exit(1);
 }

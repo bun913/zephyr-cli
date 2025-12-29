@@ -17,6 +17,9 @@ coverage/
 .env.local
 .env.*.local
 
+# Configuration
+config.json
+
 # IDE
 .vscode/
 .idea/

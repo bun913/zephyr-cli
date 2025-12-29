@@ -1,0 +1,17 @@
+{
+  "currentProfile": "default",
+  "profiles": {
+    "default": {
+      "apiToken": "your-api-token-here",
+      "projectKey": "BUN"
+    },
+    "production": {
+      "apiToken": "production-api-token",
+      "projectKey": "PROD"
+    },
+    "staging": {
+      "apiToken": "staging-api-token",
+      "projectKey": "STG"
+    }
+  }
+}
