@@ -24,11 +24,6 @@ export interface Config {
 }
 
 /**
- * Output format types
- */
-export type OutputFormat = "json" | "text";
-
-/**
  * Global CLI options available to all commands
  */
 export interface GlobalOptions {
@@ -36,6 +31,6 @@ export interface GlobalOptions {
   profile?: string;
   /** Custom configuration file path */
   config?: string;
-  /** Output format (always has default value) */
-  format: OutputFormat;
+  /** Output in JSON format (default is text/table) */
+  json?: boolean;
 }

@@ -3,11 +3,13 @@
  */
 
 import type { Command } from "commander";
+import type { Folder } from "zephyr-api-client";
 import { getProfile, loadConfig } from "../../config/manager";
 import type { GlobalOptions } from "../../config/types";
 import { createClient } from "../../utils/client";
 import { formatError } from "../../utils/error";
 import { logger } from "../../utils/logger";
+import { formatAsKeyValue, outputResults } from "../../utils/output";
 
 /**
  * Register 'folder get' command
@@ -20,7 +22,7 @@ export function registerGetCommand(parent: Command): void {
       try {
         // Get global options from parent command
         const globalOptions = command.parent?.parent?.opts() as GlobalOptions;
-        const format = globalOptions.format;
+        const useJson = globalOptions.json || false;
 
         // Parse folder ID
         const folderId = Number.parseInt(id, 10);
@@ -44,16 +46,16 @@ export function registerGetCommand(parent: Command): void {
         logger.info(`Folder found: ${folder.name}`);
 
         // Output result
-        if (format === "json") {
-          console.log(JSON.stringify(folder, null, 2));
-        } else {
-          console.log(`ID:          ${folder.id}`);
-          console.log(`Name:        ${folder.name}`);
-          console.log(`Type:        ${folder.folderType}`);
-          console.log(`Project:     ${folder.project?.id || "N/A"}`);
-          console.log(`Parent:      ${folder.parentId || "N/A"}`);
-          console.log(`Index:       ${folder.index ?? "N/A"}`);
-        }
+        const fields = [
+          { label: "ID:", getValue: (f: Folder) => f.id },
+          { label: "Name:", getValue: (f: Folder) => f.name },
+          { label: "Type:", getValue: (f: Folder) => f.folderType },
+          { label: "Project:", getValue: (f: Folder) => f.project?.id },
+          { label: "Parent:", getValue: (f: Folder) => f.parentId },
+          { label: "Index:", getValue: (f: Folder) => f.index },
+        ];
+
+        outputResults(folder, useJson, (data) => formatAsKeyValue(data as Folder, fields));
       } catch (error) {
         logger.error(formatError(error as Error));
         process.exit(1);

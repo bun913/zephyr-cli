@@ -8,6 +8,7 @@ import type { GlobalOptions } from "../../config/types";
 import { createClient } from "../../utils/client";
 import { formatError } from "../../utils/error";
 import { logger } from "../../utils/logger";
+import { formatAsKeyValue, outputResults } from "../../utils/output";
 import { registerUpdateOptions, type TestCaseUpdateOptions } from "./options";
 
 /**
@@ -21,7 +22,7 @@ export function registerUpdateCommand(parent: Command): void {
       try {
         // Get global options from parent command
         const globalOptions = command.parent?.parent?.opts() as GlobalOptions;
-        const format = globalOptions.format;
+        const useJson = globalOptions.json || false;
 
         // Load configuration
         const config = loadConfig(globalOptions.config);
@@ -57,11 +58,15 @@ export function registerUpdateCommand(parent: Command): void {
         logger.info(`Test case updated successfully: ${key}`);
 
         // Output result
-        if (format === "json") {
-          console.log(JSON.stringify({ key, updated: true }, null, 2));
-        } else {
-          console.log(`Test case ${key} updated successfully`);
-        }
+        const result = { key, updated: true };
+        const fields = [
+          { label: "Key:", getValue: (r: { key: string }) => r.key },
+          { label: "Updated:", getValue: () => "true" },
+        ];
+
+        outputResults(result, useJson, (data) =>
+          formatAsKeyValue(data as { key: string; updated: boolean }, fields),
+        );
       } catch (error) {
         logger.error(formatError(error as Error));
         process.exit(1);

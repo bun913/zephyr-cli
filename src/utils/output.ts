@@ -57,18 +57,45 @@ export function formatAsTable<T>(data: T[], columns: TableColumn<T>[]): string {
 }
 
 /**
- * Output results based on format option
+ * Format a single item as key-value pairs
  *
- * @param data - Data to output
- * @param format - Output format (json or text)
- * @param textFormatter - Function to format data as text (only used when format is "text")
+ * @param data - Object to format
+ * @param fields - Array of field configurations
+ * @returns Formatted string
+ */
+export function formatAsKeyValue<T>(
+  data: T,
+  fields: Array<{
+    label: string;
+    getValue: (item: T) => string | number | null | undefined;
+  }>,
+): string {
+  const maxLabelWidth = Math.max(...fields.map((f) => f.label.length));
+
+  const lines = fields
+    .map((field) => {
+      const value = field.getValue(data);
+      const strValue = value !== null && value !== undefined ? String(value) : "N/A";
+      return `${field.label.padEnd(maxLabelWidth)}  ${strValue}`;
+    })
+    .filter((line) => line.trim().length > 0);
+
+  return lines.join("\n");
+}
+
+/**
+ * Output results based on JSON flag
+ *
+ * @param data - Data to output (can be array or single object)
+ * @param useJson - Whether to use JSON format
+ * @param textFormatter - Function to format data as text (only used when useJson is false)
  */
 export function outputResults<T>(
-  data: T[],
-  format: "json" | "text",
-  textFormatter: (data: T[]) => string,
+  data: T[] | T,
+  useJson: boolean,
+  textFormatter: (data: T[] | T) => string,
 ): void {
-  if (format === "json") {
+  if (useJson) {
     console.log(JSON.stringify(data, null, 2));
   } else {
     console.log(textFormatter(data));

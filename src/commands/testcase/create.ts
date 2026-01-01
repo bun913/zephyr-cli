@@ -3,11 +3,13 @@
  */
 
 import type { Command } from "commander";
+import type { KeyedCreatedResource } from "zephyr-api-client";
 import { getProfile, loadConfig } from "../../config/manager";
 import type { GlobalOptions } from "../../config/types";
 import { createClient } from "../../utils/client";
 import { formatError } from "../../utils/error";
 import { logger } from "../../utils/logger";
+import { formatAsKeyValue, outputResults } from "../../utils/output";
 import { registerCreateOptions, type TestCaseCreateOptions } from "./options";
 
 /**
@@ -20,7 +22,7 @@ export function registerCreateCommand(parent: Command): void {
     try {
       // Get global options from parent command
       const globalOptions = command.parent?.parent?.opts() as GlobalOptions;
-      const format = globalOptions.format;
+      const useJson = globalOptions.json || false;
 
       // Load configuration
       const config = loadConfig(globalOptions.config);
@@ -53,15 +55,15 @@ export function registerCreateCommand(parent: Command): void {
       logger.info(`Test case created successfully`);
 
       // Output result
-      if (format === "json") {
-        console.log(JSON.stringify(response.data, null, 2));
-      } else {
-        console.log(`Created test case: ${response.data.key || response.data.id}`);
-        console.log(`ID: ${response.data.id}`);
-        if (response.data.self) {
-          console.log(`URL: ${response.data.self}`);
-        }
-      }
+      const fields = [
+        { label: "Key:", getValue: (r: KeyedCreatedResource) => r.key },
+        { label: "ID:", getValue: (r: KeyedCreatedResource) => r.id },
+        { label: "URL:", getValue: (r: KeyedCreatedResource) => r.self },
+      ];
+
+      outputResults(response.data, useJson, (data) =>
+        formatAsKeyValue(data as KeyedCreatedResource, fields),
+      );
     } catch (error) {
       logger.error(formatError(error as Error));
       process.exit(1);

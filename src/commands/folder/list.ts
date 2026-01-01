@@ -27,7 +27,7 @@ export function registerListCommand(parent: Command): void {
     try {
       // Get global options from parent command
       const globalOptions = command.parent?.parent?.opts() as GlobalOptions;
-      const format = globalOptions.format;
+      const useJson = globalOptions.json || false;
 
       // Load configuration
       const config = loadConfig(globalOptions.config);
@@ -63,7 +63,7 @@ export function registerListCommand(parent: Command): void {
 
       // Show pagination info and output results
       showPaginationInfo(!!response.data.next, options.startAt, options.maxResults);
-      outputResults(folders, format, (data) => formatAsTable(data, columns));
+      outputResults(folders, useJson, (data) => formatAsTable(data as Folder[], columns));
     } catch (error) {
       logger.error(formatError(error as Error));
       process.exit(1);
