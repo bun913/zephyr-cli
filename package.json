@@ -49,10 +49,8 @@
   },
   "packageManager": "bun@1.0.0",
   "files": [
-    "dist/",
-    "README.md",
-    "LICENSE",
-    "package.json"
+    "dist/index.js",
+    "README.md"
   ],
   "publishConfig": {
     "access": "public"
