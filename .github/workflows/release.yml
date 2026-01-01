@@ -11,7 +11,6 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-      id-token: write
 
     steps:
       - name: Extract version from tag
@@ -28,12 +27,6 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Setup Node.js for npm publish
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-          registry-url: "https://registry.npmjs.org"
-
       - name: Configure Git
         run: |
           git config --global user.name 'github-actions[bot]'
@@ -42,7 +35,6 @@ jobs:
       - name: Update package version
         run: |
           bun --version
-          # Update package.json version manually since bun doesn't have version command yet
           sed -i 's/"version": "[^"]*"/"version": "${{ steps.version.outputs.VERSION }}"/' package.json
 
       - name: Install dependencies
@@ -53,9 +45,6 @@ jobs:
 
       - name: Build
         run: bun run build
-
-      - name: Publish to npm
-        run: npm publish --provenance --access public
 
       - name: Create release branch
         run: |
@@ -80,15 +69,19 @@ jobs:
               body: [
                 `# Release v${version}`,
                 '',
-                '## Changes',
-                '- Version bump to v' + version,
-                '- Package published to npm',
-                '',
                 '## Installation',
                 '```bash',
-                `npm install -g zephyr-cli@${version}`,
-                '# or',
-                `bun add -g zephyr-cli@${version}`,
+                '# Linux',
+                `curl -L https://github.com/${owner}/${repo}/releases/latest/download/zephyr-linux-x64 -o zephyr`,
+                'chmod +x zephyr',
+                '',
+                '# macOS (Apple Silicon)',
+                `curl -L https://github.com/${owner}/${repo}/releases/latest/download/zephyr-macos-arm64 -o zephyr`,
+                'chmod +x zephyr',
+                '',
+                '# macOS (Intel)',
+                `curl -L https://github.com/${owner}/${repo}/releases/latest/download/zephyr-macos-x64 -o zephyr`,
+                'chmod +x zephyr',
                 '```',
                 '',
                 `**Full Changelog**: https://github.com/${owner}/${repo}/compare/v${version}...HEAD`
