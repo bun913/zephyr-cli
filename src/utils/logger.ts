@@ -1,29 +1,47 @@
-import pino from "pino";
+type LogLevel = "debug" | "info" | "warn" | "error";
 
-/**
- * Create logger instance
- * Default level is 'error' (only show errors)
- * Set to 'info' when verbose mode is enabled
- */
-export const createLogger = (verbose = false) =>
-  pino({
-    level: verbose ? "info" : "error",
-    transport: {
-      target: "pino-pretty",
-      options: {
-        colorize: true,
-        translateTime: "HH:MM:ss",
-        ignore: "pid,hostname",
-      },
-    },
-  });
+interface Logger {
+  debug: (msg: string) => void;
+  info: (msg: string) => void;
+  warn: (msg: string) => void;
+  error: (msg: string) => void;
+}
 
-// Default logger (will be replaced per command based on verbose flag)
-export let logger = createLogger(false);
+let verboseMode = false;
+
+const formatTime = (): string => {
+  const now = new Date();
+  return now.toTimeString().slice(0, 8);
+};
+
+const log = (level: LogLevel, msg: string): void => {
+  const time = formatTime();
+  const prefix = `[${time}] ${level.toUpperCase()}:`;
+
+  switch (level) {
+    case "debug":
+    case "info":
+      if (verboseMode) console.log(`${prefix} ${msg}`);
+      break;
+    case "warn":
+      console.warn(`${prefix} ${msg}`);
+      break;
+    case "error":
+      console.error(`${prefix} ${msg}`);
+      break;
+  }
+};
+
+export const logger: Logger = {
+  debug: (msg: string) => log("debug", msg),
+  info: (msg: string) => log("info", msg),
+  warn: (msg: string) => log("warn", msg),
+  error: (msg: string) => log("error", msg),
+};
 
 /**
  * Set logger level based on verbose flag
  */
 export function setLoggerVerbose(verbose: boolean): void {
-  logger = createLogger(verbose);
+  verboseMode = verbose;
 }
