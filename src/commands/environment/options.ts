@@ -3,10 +3,7 @@
  */
 
 import type { Command } from "commander";
-import {
-  type PaginationOptions,
-  registerPaginationOptions,
-} from "../../utils/common-options";
+import { type PaginationOptions, registerPaginationOptions } from "../../utils/common-options";
 
 /**
  * Type for 'environment list' options

@@ -3,6 +3,8 @@
 import { Command } from "commander";
 import { registerEnvironmentCommand } from "./commands/environment";
 import { registerFolderCommand } from "./commands/folder";
+import { registerPriorityCommand } from "./commands/priority";
+import { registerStatusCommand } from "./commands/status";
 import { registerTestcaseCommand } from "./commands/testcase";
 import { registerTestCycleCommand } from "./commands/testcycle";
 import { registerTestExecutionCommand } from "./commands/testexecution";
@@ -33,6 +35,8 @@ function main() {
   registerFolderCommand(program);
   registerTestStepCommand(program);
   registerEnvironmentCommand(program);
+  registerStatusCommand(program);
+  registerPriorityCommand(program);
 
   // Parse arguments
   program.parse(process.argv);

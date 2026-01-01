@@ -1,5 +1,5 @@
 /**
- * Environment create command implementation
+ * Priority get command implementation
  */
 
 import type { Command } from "commander";
@@ -8,16 +8,15 @@ import type { GlobalOptions } from "../../config/types";
 import { createClient } from "../../utils/client";
 import { formatError } from "../../utils/error";
 import { logger, setLoggerVerbose } from "../../utils/logger";
-import { type EnvironmentCreateOptions, registerCreateOptions } from "./options";
 
 /**
- * Register 'environment create' command
+ * Register 'priority get' command
  */
-export function registerCreateCommand(parent: Command): void {
-  const createCommand = parent.command("create").description("Create a new environment");
-
-  registerCreateOptions(createCommand).action(
-    async (options: EnvironmentCreateOptions, command) => {
+export function registerGetCommand(parent: Command): void {
+  parent
+    .command("get <id>")
+    .description("Get a priority by ID")
+    .action(async (id: string, _options, command) => {
       try {
         const globalOptions = command.parent?.parent?.opts() as GlobalOptions;
         setLoggerVerbose(globalOptions.verbose || false);
@@ -25,21 +24,21 @@ export function registerCreateCommand(parent: Command): void {
         const config = loadConfig(globalOptions.config);
         const profile = getProfile(config, globalOptions.profile);
 
-        logger.info(`Creating environment in project: ${profile.projectKey}`);
+        const priorityId = Number.parseInt(id, 10);
+        if (Number.isNaN(priorityId)) {
+          throw new Error("Priority ID must be a number");
+        }
+
+        logger.info(`Fetching priority: ${priorityId}`);
 
         const client = createClient(profile);
-        const response = await client.environments.createEnvironment({
-          projectKey: profile.projectKey,
-          name: options.name,
-          ...(options.description && { description: options.description }),
-        });
+        const response = await client.priorities.getPriority(priorityId);
 
-        logger.info(`Environment created successfully`);
+        logger.info(`Priority found: ${response.data.name}`);
         console.log(JSON.stringify(response.data, null, 2));
       } catch (error) {
         logger.error(formatError(error as Error));
         process.exit(1);
       }
-    },
-  );
+    });
 }

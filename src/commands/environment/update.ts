@@ -8,7 +8,7 @@ import type { GlobalOptions } from "../../config/types";
 import { createClient } from "../../utils/client";
 import { formatError } from "../../utils/error";
 import { logger, setLoggerVerbose } from "../../utils/logger";
-import { registerUpdateOptions, type EnvironmentUpdateOptions } from "./options";
+import { type EnvironmentUpdateOptions, registerUpdateOptions } from "./options";
 
 /**
  * Register 'environment update' command
