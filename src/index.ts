@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
+import { registerEnvironmentCommand } from "./commands/environment";
 import { registerFolderCommand } from "./commands/folder";
 import { registerTestcaseCommand } from "./commands/testcase";
 import { registerTestCycleCommand } from "./commands/testcycle";
@@ -31,6 +32,7 @@ function main() {
   registerTestPlanCommand(program);
   registerFolderCommand(program);
   registerTestStepCommand(program);
+  registerEnvironmentCommand(program);
 
   // Parse arguments
   program.parse(process.argv);
