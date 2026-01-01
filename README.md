@@ -2,6 +2,30 @@
 
 CLI tool for Zephyr Scale API
 
+## Installation
+
+### Homebrew (macOS / Linux)
+
+```bash
+brew install bun913/zephyr-cli/zephyr
+```
+
+### Manual Download
+
+```bash
+# macOS (Apple Silicon)
+curl -L https://github.com/bun913/zephyr-cli/releases/latest/download/zephyr-macos-arm64 -o /usr/local/bin/zephyr
+chmod +x /usr/local/bin/zephyr
+
+# macOS (Intel)
+curl -L https://github.com/bun913/zephyr-cli/releases/latest/download/zephyr-macos-x64 -o /usr/local/bin/zephyr
+chmod +x /usr/local/bin/zephyr
+
+# Linux
+curl -L https://github.com/bun913/zephyr-cli/releases/latest/download/zephyr-linux-x64 -o /usr/local/bin/zephyr
+chmod +x /usr/local/bin/zephyr
+```
+
 ## Commands
 
 | Command | Subcommands | Description |
