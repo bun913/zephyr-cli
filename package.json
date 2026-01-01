@@ -1,6 +1,6 @@
 {
   "name": "@bun913/zephyr-cli",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "CLI tool for Zephyr Scale API",
   "type": "module",
   "bin": {
