@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
+import { registerFolderCommand } from "./commands/folder";
 import { registerTestcaseCommand } from "./commands/testcase";
 import { logger } from "./utils/logger";
 
@@ -30,6 +31,7 @@ function main() {
 
   // Register commands
   registerTestcaseCommand(program);
+  registerFolderCommand(program);
 
   // Parse arguments
   program.parse(process.argv);
