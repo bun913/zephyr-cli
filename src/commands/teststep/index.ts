@@ -7,7 +7,7 @@ import { registerCreateCommand } from "./create";
 import { registerListCommand } from "./list";
 
 /**
- * Register 'testcase teststep' subcommand
+ * Register 'teststep' command
  */
 export function registerTestStepCommand(parent: Command): void {
   const teststepCommand = parent

@@ -6,6 +6,14 @@ import type { Command } from "commander";
 import { type PaginationOptions, registerPaginationOptions } from "../../utils/common-options";
 
 /**
+ * Input for test step creation
+ */
+export interface StepInput {
+  description: string;
+  expectedResult?: string;
+}
+
+/**
  * Register options for 'testcase list' command
  */
 export function registerListOptions(command: Command): Command {
@@ -65,7 +73,21 @@ export function registerCreateOptions(command: Command): Command {
     .option("--owner-id <id>", "Atlassian Account ID of the Jira user")
     .option("--labels <labels>", "Comma-separated list of labels", (val) => {
       return val.split(",").map((label) => label.trim());
-    });
+    })
+    .option(
+      "--step <step>",
+      "Add inline test step: 'description' or 'description|expected result' (can be specified multiple times)",
+      (val, prev: StepInput[] = []) => {
+        const parts = val.split("|");
+        return [
+          ...prev,
+          {
+            description: parts[0]?.trim() || "",
+            expectedResult: parts[1]?.trim(),
+          },
+        ];
+      },
+    );
 
   return command;
 }
@@ -84,6 +106,7 @@ export interface TestCaseCreateOptions {
   folderId?: number;
   ownerId?: string;
   labels?: string[];
+  step?: StepInput[];
 }
 
 /**

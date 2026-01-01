@@ -3,10 +3,10 @@
  */
 
 import type { Command } from "commander";
-import { registerPaginationOptions } from "../../../utils/common-options";
+import { registerPaginationOptions } from "../../utils/common-options";
 
 /**
- * Options for 'testcase teststep list' command
+ * Options for 'teststep list' command
  */
 export interface TestStepListOptions {
   maxResults: number;
@@ -14,7 +14,7 @@ export interface TestStepListOptions {
 }
 
 /**
- * Register options for 'testcase teststep list' command
+ * Register options for 'teststep list' command
  */
 export function registerListOptions(command: Command): Command {
   registerPaginationOptions(command);
@@ -22,16 +22,18 @@ export function registerListOptions(command: Command): Command {
 }
 
 /**
- * Options for 'testcase teststep create' command
+ * Options for 'teststep create' command
  */
 export interface TestStepCreateOptions {
   mode: "APPEND" | "OVERWRITE";
   inline?: string;
+  expectedResult?: string;
+  testData?: string;
   testCaseKey?: string;
 }
 
 /**
- * Register options for 'testcase teststep create' command
+ * Register options for 'teststep create' command
  */
 export function registerCreateOptions(command: Command): Command {
   command
@@ -41,6 +43,8 @@ export function registerCreateOptions(command: Command): Command {
       "APPEND",
     )
     .option("--inline <description>", "Inline step description")
+    .option("--expected-result <text>", "Expected result for inline step")
+    .option("--test-data <text>", "Test data for inline step")
     .option("--test-case-key <key>", "Test case key to delegate execution to");
 
   return command;

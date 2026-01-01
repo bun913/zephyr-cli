@@ -57,6 +57,25 @@ export function registerCreateCommand(parent: Command): void {
 
       logger.info(`Test case created successfully`);
 
+      // Create test steps if provided
+      if (options.step && options.step.length > 0 && response.data.key) {
+        logger.info(`Creating ${options.step.length} test step(s)`);
+
+        const testSteps = options.step.map((step) => ({
+          inline: {
+            description: step.description,
+            ...(step.expectedResult && { expectedResult: step.expectedResult }),
+          },
+        }));
+
+        await client.testcases.createTestCaseTestSteps(response.data.key, {
+          mode: "APPEND",
+          items: testSteps,
+        });
+
+        logger.info(`Test steps created successfully`);
+      }
+
       // Output result
       const fields = [
         { label: "Key:", getValue: (r: KeyedCreatedResource) => r.key },

@@ -4,21 +4,21 @@
 
 import type { Command } from "commander";
 import type { TestStep } from "zephyr-api-client";
-import { getProfile, loadConfig } from "../../../config/manager";
-import type { GlobalOptions } from "../../../config/types";
-import { createClient } from "../../../utils/client";
-import { formatError } from "../../../utils/error";
-import { logger, setLoggerVerbose } from "../../../utils/logger";
+import { getProfile, loadConfig } from "../../config/manager";
+import type { GlobalOptions } from "../../config/types";
+import { createClient } from "../../utils/client";
+import { formatError } from "../../utils/error";
+import { logger, setLoggerVerbose } from "../../utils/logger";
 import {
   formatAsTable,
   outputResults,
   showPaginationInfo,
   type TableColumn,
-} from "../../../utils/output";
+} from "../../utils/output";
 import { registerListOptions, type TestStepListOptions } from "./options";
 
 /**
- * Register 'testcase teststep list' command
+ * Register 'teststep list' command
  */
 export function registerListCommand(parent: Command): void {
   const listCommand = parent
@@ -29,7 +29,7 @@ export function registerListCommand(parent: Command): void {
     async (testCaseKey: string, options: TestStepListOptions, command) => {
       try {
         // Get global options from parent command
-        const globalOptions = command.parent?.parent?.parent?.opts() as GlobalOptions;
+        const globalOptions = command.parent?.parent?.opts() as GlobalOptions;
         const useText = globalOptions.text || false;
 
         // Set logger verbosity

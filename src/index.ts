@@ -3,6 +3,7 @@
 import { Command } from "commander";
 import { registerFolderCommand } from "./commands/folder";
 import { registerTestcaseCommand } from "./commands/testcase";
+import { registerTestStepCommand } from "./commands/teststep";
 import { logger } from "./utils/logger";
 
 /**
@@ -23,6 +24,7 @@ function main() {
   // Register commands
   registerTestcaseCommand(program);
   registerFolderCommand(program);
+  registerTestStepCommand(program);
 
   // Parse arguments
   program.parse(process.argv);

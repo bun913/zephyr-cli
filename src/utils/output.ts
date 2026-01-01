@@ -11,7 +11,7 @@ export interface TableColumn<T> {
   /** Column header text */
   header: string;
   /** Function to extract value from data item */
-  getValue: (item: T) => string | number | null | undefined;
+  getValue: (item: T, index?: number) => string | number | null | undefined;
   /** Optional fixed width for the column */
   width?: number;
 }
@@ -34,7 +34,9 @@ export function formatAsTable<T>(data: T[], columns: TableColumn<T>[]): string {
 
     // Get max width from header and data
     const headerWidth = col.header.length;
-    const dataWidth = Math.max(...data.map((item) => String(col.getValue(item) || "").length));
+    const dataWidth = Math.max(
+      ...data.map((item, idx) => String(col.getValue(item, idx) || "").length),
+    );
     return Math.max(headerWidth, dataWidth);
   });
 
@@ -43,10 +45,10 @@ export function formatAsTable<T>(data: T[], columns: TableColumn<T>[]): string {
   const separator = "-".repeat(headerRow.length);
 
   // Build data rows
-  const dataRows = data.map((item) =>
+  const dataRows = data.map((item, itemIndex) =>
     columns
       .map((col, idx) => {
-        const value = col.getValue(item);
+        const value = col.getValue(item, itemIndex);
         const strValue = value !== null && value !== undefined ? String(value) : "N/A";
         return strValue.padEnd(widths[idx] ?? 0);
       })
