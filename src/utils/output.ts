@@ -84,21 +84,21 @@ export function formatAsKeyValue<T>(
 }
 
 /**
- * Output results based on JSON flag
+ * Output results based on text flag
  *
  * @param data - Data to output (can be array or single object)
- * @param useJson - Whether to use JSON format
- * @param textFormatter - Function to format data as text (only used when useJson is false)
+ * @param useText - Whether to use text format (default is JSON)
+ * @param textFormatter - Function to format data as text (only used when useText is true)
  */
 export function outputResults<T>(
   data: T[] | T,
-  useJson: boolean,
+  useText: boolean,
   textFormatter: (data: T[] | T) => string,
 ): void {
-  if (useJson) {
-    console.log(JSON.stringify(data, null, 2));
-  } else {
+  if (useText) {
     console.log(textFormatter(data));
+  } else {
+    console.log(JSON.stringify(data, null, 2));
   }
 }
 

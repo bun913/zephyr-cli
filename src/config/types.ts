@@ -31,6 +31,8 @@ export interface GlobalOptions {
   profile?: string;
   /** Custom configuration file path */
   config?: string;
-  /** Output in JSON format (default is text/table) */
-  json?: boolean;
+  /** Output in human-readable text format (default is JSON) */
+  text?: boolean;
+  /** Show detailed logging output */
+  verbose?: boolean;
 }

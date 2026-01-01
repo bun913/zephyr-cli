@@ -1,17 +1,29 @@
 import pino from "pino";
 
 /**
- * Logger instance for the CLI
- * Configured with pino-pretty for human-readable output
+ * Create logger instance
+ * Default level is 'error' (only show errors)
+ * Set to 'info' when verbose mode is enabled
  */
-export const logger = pino({
-  level: process.env.LOG_LEVEL || "info",
-  transport: {
-    target: "pino-pretty",
-    options: {
-      colorize: true,
-      translateTime: "HH:MM:ss",
-      ignore: "pid,hostname",
+export const createLogger = (verbose = false) =>
+  pino({
+    level: verbose ? "info" : "error",
+    transport: {
+      target: "pino-pretty",
+      options: {
+        colorize: true,
+        translateTime: "HH:MM:ss",
+        ignore: "pid,hostname",
+      },
     },
-  },
-});
+  });
+
+// Default logger (will be replaced per command based on verbose flag)
+export let logger = createLogger(false);
+
+/**
+ * Set logger level based on verbose flag
+ */
+export function setLoggerVerbose(verbose: boolean): void {
+  logger = createLogger(verbose);
+}

@@ -8,7 +8,7 @@ import { getProfile, loadConfig } from "../../config/manager";
 import type { GlobalOptions } from "../../config/types";
 import { createClient } from "../../utils/client";
 import { formatError } from "../../utils/error";
-import { logger } from "../../utils/logger";
+import { logger, setLoggerVerbose } from "../../utils/logger";
 import { formatAsKeyValue, outputResults } from "../../utils/output";
 
 /**
@@ -22,7 +22,10 @@ export function registerGetCommand(parent: Command): void {
       try {
         // Get global options from parent command
         const globalOptions = command.parent?.parent?.opts() as GlobalOptions;
-        const useJson = globalOptions.json || false;
+        const useText = globalOptions.text || false;
+
+        // Set logger verbosity
+        setLoggerVerbose(globalOptions.verbose || false);
 
         // Load configuration
         const config = loadConfig(globalOptions.config);
@@ -53,7 +56,7 @@ export function registerGetCommand(parent: Command): void {
           { label: "Labels:", getValue: (tc: TestCase) => tc.labels?.join(", ") },
         ];
 
-        outputResults(testCase, useJson, (data) => formatAsKeyValue(data as TestCase, fields));
+        outputResults(testCase, useText, (data) => formatAsKeyValue(data as TestCase, fields));
       } catch (error) {
         logger.error(formatError(error as Error));
         process.exit(1);

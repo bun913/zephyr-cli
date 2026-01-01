@@ -17,7 +17,8 @@ function main() {
     .version("0.1.0")
     .option("-p, --profile <name>", "Profile name to use", "default")
     .option("-c, --config <path>", "Custom configuration file path")
-    .option("--json", "Output in JSON format");
+    .option("--text", "Output in human-readable text format (default is JSON)")
+    .option("--verbose", "Show detailed logging output");
 
   // Register commands
   registerTestcaseCommand(program);

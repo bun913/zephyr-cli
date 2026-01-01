@@ -8,7 +8,7 @@ import { getProfile, loadConfig } from "../../config/manager";
 import type { GlobalOptions } from "../../config/types";
 import { createClient } from "../../utils/client";
 import { formatError } from "../../utils/error";
-import { logger } from "../../utils/logger";
+import { logger, setLoggerVerbose } from "../../utils/logger";
 import { formatAsKeyValue, outputResults } from "../../utils/output";
 
 /**
@@ -22,7 +22,10 @@ export function registerGetCommand(parent: Command): void {
       try {
         // Get global options from parent command
         const globalOptions = command.parent?.parent?.opts() as GlobalOptions;
-        const useJson = globalOptions.json || false;
+        const useText = globalOptions.text || false;
+
+        // Set logger verbosity
+        setLoggerVerbose(globalOptions.verbose || false);
 
         // Parse folder ID
         const folderId = Number.parseInt(id, 10);
@@ -55,7 +58,7 @@ export function registerGetCommand(parent: Command): void {
           { label: "Index:", getValue: (f: Folder) => f.index },
         ];
 
-        outputResults(folder, useJson, (data) => formatAsKeyValue(data as Folder, fields));
+        outputResults(folder, useText, (data) => formatAsKeyValue(data as Folder, fields));
       } catch (error) {
         logger.error(formatError(error as Error));
         process.exit(1);

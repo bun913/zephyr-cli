@@ -8,7 +8,7 @@ import { getProfile, loadConfig } from "../../config/manager";
 import type { GlobalOptions } from "../../config/types";
 import { createClient } from "../../utils/client";
 import { formatError } from "../../utils/error";
-import { logger } from "../../utils/logger";
+import { logger, setLoggerVerbose } from "../../utils/logger";
 import {
   formatAsTable,
   outputResults,
@@ -27,7 +27,10 @@ export function registerListCommand(parent: Command): void {
     try {
       // Get global options from parent command
       const globalOptions = command.parent?.parent?.opts() as GlobalOptions;
-      const useJson = globalOptions.json || false;
+      const useText = globalOptions.text || false;
+
+      // Set logger verbosity
+      setLoggerVerbose(globalOptions.verbose || false);
 
       // Load configuration
       const config = loadConfig(globalOptions.config);
@@ -62,7 +65,7 @@ export function registerListCommand(parent: Command): void {
 
       // Show pagination info and output results
       showPaginationInfo(!!response.data.next, options.startAt, options.maxResults);
-      outputResults(testCases, useJson, (data) => formatAsTable(data as TestCase[], columns));
+      outputResults(testCases, useText, (data) => formatAsTable(data as TestCase[], columns));
     } catch (error) {
       logger.error(formatError(error as Error));
       process.exit(1);

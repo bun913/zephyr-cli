@@ -7,7 +7,7 @@ import { getProfile, loadConfig } from "../../config/manager";
 import type { GlobalOptions } from "../../config/types";
 import { createClient } from "../../utils/client";
 import { formatError } from "../../utils/error";
-import { logger } from "../../utils/logger";
+import { logger, setLoggerVerbose } from "../../utils/logger";
 import { formatAsKeyValue, outputResults } from "../../utils/output";
 import { registerUpdateOptions, type TestCaseUpdateOptions } from "./options";
 
@@ -22,7 +22,10 @@ export function registerUpdateCommand(parent: Command): void {
       try {
         // Get global options from parent command
         const globalOptions = command.parent?.parent?.opts() as GlobalOptions;
-        const useJson = globalOptions.json || false;
+        const useText = globalOptions.text || false;
+
+        // Set logger verbosity
+        setLoggerVerbose(globalOptions.verbose || false);
 
         // Load configuration
         const config = loadConfig(globalOptions.config);
@@ -64,7 +67,7 @@ export function registerUpdateCommand(parent: Command): void {
           { label: "Updated:", getValue: () => "true" },
         ];
 
-        outputResults(result, useJson, (data) =>
+        outputResults(result, useText, (data) =>
           formatAsKeyValue(data as { key: string; updated: boolean }, fields),
         );
       } catch (error) {
