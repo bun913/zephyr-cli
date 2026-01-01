@@ -28,6 +28,12 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Setup Node.js for npm publish
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+
       - name: Configure Git
         run: |
           git config --global user.name 'github-actions[bot]'
@@ -53,13 +59,11 @@ jobs:
 
       - name: Publish to npm
         run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create release branch
         run: |
           git checkout -b release/v${{ steps.version.outputs.VERSION }}
-          git add package.json bun.lockb
+          git add package.json bun.lock
           git commit -m "chore: bump version to v${{ steps.version.outputs.VERSION }}"
           git push origin release/v${{ steps.version.outputs.VERSION }}
 
