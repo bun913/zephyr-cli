@@ -50,6 +50,7 @@ export function registerCreateCommand(parent: Command): void {
         ...(options.folderId !== undefined && { folderId: options.folderId }),
         ...(options.ownerId && { ownerId: options.ownerId }),
         ...(options.labels && { labels: options.labels }),
+        ...(options.customField && { customFields: options.customField }),
       };
 
       // Create test case

@@ -53,6 +53,9 @@ export function registerUpdateCommand(parent: Command): void {
           ...(options.folderId !== undefined && { folderId: options.folderId }),
           ...(options.ownerId !== undefined && { ownerId: options.ownerId }),
           ...(options.labels !== undefined && { labels: options.labels }),
+          ...(options.customField && {
+            customFields: { ...currentTestCase.customFields, ...options.customField },
+          }),
         };
 
         // Update test case

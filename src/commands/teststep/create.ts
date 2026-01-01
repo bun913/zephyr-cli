@@ -56,6 +56,7 @@ export function registerCreateCommand(parent: Command): void {
                 description: options.inline,
                 ...(options.expectedResult && { expectedResult: options.expectedResult }),
                 ...(options.testData && { testData: options.testData }),
+                ...(options.customField && { customFields: options.customField }),
               },
             }
           : {

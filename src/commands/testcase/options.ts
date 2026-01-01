@@ -3,7 +3,12 @@
  */
 
 import type { Command } from "commander";
-import { type PaginationOptions, registerPaginationOptions } from "../../utils/common-options";
+import {
+  type CustomFields,
+  type PaginationOptions,
+  registerCustomFieldOptions,
+  registerPaginationOptions,
+} from "../../utils/common-options";
 
 /**
  * Input for test step creation
@@ -89,6 +94,8 @@ export function registerCreateOptions(command: Command): Command {
       },
     );
 
+  registerCustomFieldOptions(command);
+
   return command;
 }
 
@@ -107,6 +114,7 @@ export interface TestCaseCreateOptions {
   ownerId?: string;
   labels?: string[];
   step?: StepInput[];
+  customField?: CustomFields;
 }
 
 /**
@@ -145,6 +153,8 @@ export function registerUpdateOptions(command: Command): Command {
       return val.split(",").map((label) => label.trim());
     });
 
+  registerCustomFieldOptions(command);
+
   return command;
 }
 
@@ -162,4 +172,5 @@ export interface TestCaseUpdateOptions {
   folderId?: number;
   ownerId?: string;
   labels?: string[];
+  customField?: CustomFields;
 }

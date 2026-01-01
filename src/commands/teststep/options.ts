@@ -3,7 +3,11 @@
  */
 
 import type { Command } from "commander";
-import { registerPaginationOptions } from "../../utils/common-options";
+import {
+  type CustomFields,
+  registerCustomFieldOptions,
+  registerPaginationOptions,
+} from "../../utils/common-options";
 
 /**
  * Options for 'teststep list' command
@@ -30,6 +34,7 @@ export interface TestStepCreateOptions {
   expectedResult?: string;
   testData?: string;
   testCaseKey?: string;
+  customField?: CustomFields;
 }
 
 /**
@@ -46,6 +51,8 @@ export function registerCreateOptions(command: Command): Command {
     .option("--expected-result <text>", "Expected result for inline step")
     .option("--test-data <text>", "Test data for inline step")
     .option("--test-case-key <key>", "Test case key to delegate execution to");
+
+  registerCustomFieldOptions(command);
 
   return command;
 }

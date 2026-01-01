@@ -13,6 +13,62 @@ export interface PaginationOptions {
 }
 
 /**
+ * Custom fields type
+ */
+export type CustomFields = Record<string, unknown>;
+
+/**
+ * Parse a custom field value string into appropriate type
+ * - Numbers: "123" -> 123
+ * - Booleans: "true"/"false" -> true/false
+ * - JSON arrays/objects: "[...]" or "{...}" -> parsed JSON
+ * - Strings: everything else
+ */
+function parseCustomFieldValue(value: string): unknown {
+  // Try number
+  if (/^-?\d+(\.\d+)?$/.test(value)) {
+    return Number(value);
+  }
+
+  // Try boolean
+  if (value.toLowerCase() === "true") return true;
+  if (value.toLowerCase() === "false") return false;
+
+  // Try JSON (arrays or objects)
+  if (
+    (value.startsWith("[") && value.endsWith("]")) ||
+    (value.startsWith("{") && value.endsWith("}"))
+  ) {
+    try {
+      return JSON.parse(value);
+    } catch {
+      // Not valid JSON, treat as string
+    }
+  }
+
+  // Default to string
+  return value;
+}
+
+/**
+ * Parse custom field option "key=value" into object entry
+ */
+function parseCustomField(input: string, prev: CustomFields = {}): CustomFields {
+  const eqIndex = input.indexOf("=");
+  if (eqIndex === -1) {
+    throw new Error(`Invalid custom field format: "${input}". Expected "key=value"`);
+  }
+
+  const key = input.slice(0, eqIndex).trim();
+  const value = input.slice(eqIndex + 1);
+
+  return {
+    ...prev,
+    [key]: parseCustomFieldValue(value),
+  };
+}
+
+/**
  * Register pagination options for list commands
  *
  * These options are common across all resource list operations:
@@ -48,4 +104,18 @@ export function registerPaginationOptions(command: Command): Command {
       },
       0,
     );
+}
+
+/**
+ * Register custom field options for create/update commands
+ *
+ * @param command - Commander.js command instance
+ * @returns The command with custom field option registered
+ */
+export function registerCustomFieldOptions(command: Command): Command {
+  return command.option(
+    "--custom-field <key=value>",
+    "Set custom field (can be specified multiple times). Values are auto-parsed as number/boolean/JSON array",
+    parseCustomField,
+  );
 }
