@@ -16,7 +16,17 @@ function main() {
     .version("0.1.0")
     .option("-p, --profile <name>", "Profile name to use", "default")
     .option("-c, --config <path>", "Custom configuration file path")
-    .option("-f, --format <format>", "Output format (json or text)", "json");
+    .option(
+      "-f, --format <format>",
+      "Output format (json or text)",
+      (val) => {
+        if (val !== "json" && val !== "text") {
+          throw new Error(`Invalid format: ${val}. Must be 'json' or 'text'`);
+        }
+        return val as "json" | "text";
+      },
+      "json" as const,
+    );
 
   // Register commands
   registerTestcaseCommand(program);

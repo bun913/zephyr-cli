@@ -36,6 +36,6 @@ export interface GlobalOptions {
   profile?: string;
   /** Custom configuration file path */
   config?: string;
-  /** Output format */
-  format?: OutputFormat;
+  /** Output format (always has default value) */
+  format: OutputFormat;
 }

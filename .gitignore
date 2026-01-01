@@ -8,6 +8,9 @@ dist/
 zephyr
 zephyr-*
 
+# Generated files
+src/generated/
+
 # Testing
 coverage/
 .nyc_output/
