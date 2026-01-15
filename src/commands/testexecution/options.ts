@@ -89,6 +89,7 @@ export function registerCreateOptions(command: Command): Command {
  * Type for 'testexecution update' options
  */
 export interface TestExecutionUpdateOptions {
+  testCycle?: string;
   statusName?: string;
   environmentName?: string;
   actualEndDate?: string;
@@ -103,6 +104,10 @@ export interface TestExecutionUpdateOptions {
  */
 export function registerUpdateOptions(command: Command): Command {
   command
+    .option(
+      "--test-cycle <key>",
+      "Update all test executions in the specified test cycle (e.g., CPG-R1)",
+    )
     .option("--status-name <name>", "Execution status (e.g., Pass, Fail, Not Executed)")
     .option("--environment-name <name>", "Environment name")
     .option(
