@@ -124,6 +124,15 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Update version in source
+        run: |
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            sed -i '' 's/\.version("[^"]*")/.version("${{ steps.version.outputs.VERSION }}")/' src/index.ts
+          else
+            sed -i 's/\.version("[^"]*")/.version("${{ steps.version.outputs.VERSION }}")/' src/index.ts
+          fi
+        shell: bash
+
       - name: Install dependencies
         run: bun install
 
