@@ -99,6 +99,12 @@ zephyr testexecution create \
   --test-cycle-key CPG-R1 \
   --status-name "Pass"
 
+# Update a single test execution
+zephyr testexecution update CPG-E1 --status-name "Pass"
+
+# Update all test executions in a test cycle
+zephyr testexecution update --test-cycle CPG-R1 --status-name "Pass"
+
 # Switch profile
 zephyr -p other-profile testcase list
 
