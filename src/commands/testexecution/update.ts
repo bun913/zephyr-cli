@@ -69,9 +69,7 @@ Examples:
         // Bulk update mode: update all executions in a test cycle
         if (options.testCycle) {
           if (idOrKey) {
-            logger.warn(
-              `Ignoring idOrKey "${idOrKey}" because --test-cycle option is specified`,
-            );
+            logger.warn(`Ignoring idOrKey "${idOrKey}" because --test-cycle option is specified`);
           }
 
           logger.info(`Updating all test executions in test cycle: ${options.testCycle}`);
