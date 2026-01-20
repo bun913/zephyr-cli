@@ -15,6 +15,7 @@ import {
  */
 export interface StepInput {
   description: string;
+  testData?: string;
   expectedResult?: string;
 }
 
@@ -81,14 +82,15 @@ export function registerCreateOptions(command: Command): Command {
     })
     .option(
       "--step <step>",
-      "Add inline test step: 'description' or 'description|expected result' (can be specified multiple times)",
+      "Add inline test step: 'description|test data|expected result' (can be specified multiple times)",
       (val, prev: StepInput[] = []) => {
         const parts = val.split("|");
         return [
           ...prev,
           {
             description: parts[0]?.trim() || "",
-            expectedResult: parts[1]?.trim(),
+            testData: parts[1]?.trim(),
+            expectedResult: parts[2]?.trim(),
           },
         ];
       },

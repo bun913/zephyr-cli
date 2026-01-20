@@ -65,12 +65,13 @@ export function registerCreateCommand(parent: Command): void {
         const testSteps = options.step.map((step) => ({
           inline: {
             description: step.description,
+            ...(step.testData && { testData: step.testData }),
             ...(step.expectedResult && { expectedResult: step.expectedResult }),
           },
         }));
 
         await client.testcases.createTestCaseTestSteps(response.data.key, {
-          mode: "APPEND",
+          mode: "OVERWRITE",
           items: testSteps,
         });
 

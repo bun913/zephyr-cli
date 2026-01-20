@@ -76,11 +76,11 @@ zephyr testcase get CPG-T1
 # Create test case
 zephyr testcase create --name "New Test Case"
 
-# Create with inline steps (use | to separate description and expected result)
+# Create with inline steps (use | to separate description, test data, and expected result)
 zephyr testcase create --name "Test" \
-  --step "Open the login page|Login page is displayed" \
-  --step "Enter credentials|Credentials are accepted" \
-  --step "Click submit button|User is logged in"
+  --step "Open the login page||Login page is displayed" \
+  --step "Enter credentials|user@example.com|Credentials are accepted" \
+  --step "Click submit button||User is logged in"
 
 # For test steps with custom fields, use the teststep command instead
 zephyr teststep create CPG-T1 \
