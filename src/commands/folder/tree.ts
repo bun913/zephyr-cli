@@ -19,6 +19,7 @@ interface FolderTreeNode {
   name: string;
   children: FolderTreeNode[];
   testCases: { key: string; name: string }[];
+  hasMoreTestCases: boolean;
 }
 
 /**
@@ -58,12 +59,13 @@ async function fetchTestCases(
   folderId: number,
   maxTestCases: number,
   fetchAll: boolean,
-): Promise<{ key: string; name: string }[]> {
+): Promise<{ testCases: { key: string; name: string }[]; hasMore: boolean }> {
   const testCases: { key: string; name: string }[] = [];
   let startAt = 0;
+  let hasMore = false;
 
   while (true) {
-    const limit = fetchAll ? 100 : Math.min(100, maxTestCases - testCases.length);
+    const limit = fetchAll ? 100 : Math.min(100, maxTestCases - testCases.length + 1);
     const response = await client.testcases.listTestCases({
       projectKey,
       folderId,
@@ -73,10 +75,11 @@ async function fetchTestCases(
 
     const cases = response.data.values || [];
     for (const tc of cases) {
-      testCases.push({ key: tc.key, name: tc.name });
       if (!fetchAll && testCases.length >= maxTestCases) {
-        return testCases;
+        hasMore = true;
+        return { testCases, hasMore };
       }
+      testCases.push({ key: tc.key, name: tc.name });
     }
 
     if (!response.data.next) {
@@ -85,7 +88,7 @@ async function fetchTestCases(
     startAt += 100;
   }
 
-  return testCases;
+  return { testCases, hasMore };
 }
 
 /**
@@ -112,8 +115,14 @@ async function buildTree(
   async function dfs(folder: Folder): Promise<FolderTreeNode> {
     logger.debug(`Processing: ${folder.name} (ID: ${folder.id})`);
 
-    const testCases = await fetchTestCases(client, projectKey, folder.id, maxTestCases, fetchAll);
-    logger.debug(`  Found ${testCases.length} test case(s)`);
+    const { testCases, hasMore } = await fetchTestCases(
+      client,
+      projectKey,
+      folder.id,
+      maxTestCases,
+      fetchAll,
+    );
+    logger.debug(`  Found ${testCases.length} test case(s)${hasMore ? " (more available)" : ""}`);
 
     const children = adjacencyList.get(folder.id) || [];
     const childNodes: FolderTreeNode[] = [];
@@ -126,6 +135,7 @@ async function buildTree(
       name: folder.name,
       children: childNodes,
       testCases,
+      hasMoreTestCases: hasMore,
     };
   }
 
@@ -137,6 +147,47 @@ async function buildTree(
   }
 
   return result;
+}
+
+/**
+ * Format tree as text output
+ */
+function formatTreeAsText(nodes: FolderTreeNode[], prefix = ""): string {
+  const lines: string[] = [];
+
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i];
+    const isLast = i === nodes.length - 1;
+    const connector = isLast ? "└── " : "├── ";
+    const childPrefix = isLast ? "    " : "│   ";
+
+    lines.push(`${prefix}${connector}${node.name}/ (${node.id})`);
+
+    // Add test cases
+    const hasMore = node.hasMoreTestCases;
+    const totalItems = node.children.length + node.testCases.length + (hasMore ? 1 : 0);
+    let itemIndex = 0;
+
+    for (const tc of node.testCases) {
+      itemIndex++;
+      const tcConnector = itemIndex === totalItems ? "└── " : "├── ";
+      lines.push(`${prefix}${childPrefix}${tcConnector}${tc.key}: ${tc.name}`);
+    }
+
+    // Show "..." if there are more test cases
+    if (hasMore) {
+      itemIndex++;
+      const moreConnector = itemIndex === totalItems ? "└── " : "├── ";
+      lines.push(`${prefix}${childPrefix}${moreConnector}...`);
+    }
+
+    // Add children recursively
+    if (node.children.length > 0) {
+      lines.push(formatTreeAsText(node.children, prefix + childPrefix));
+    }
+  }
+
+  return lines.join("\n");
 }
 
 /**
@@ -152,6 +203,7 @@ export function registerTreeCommand(parent: Command): void {
   registerTreeOptions(treeCommand).action(async (options: FolderTreeOptions, command) => {
     try {
       const globalOptions = command.parent?.parent?.opts() as GlobalOptions;
+      const useText = globalOptions.text || false;
       setLoggerVerbose(globalOptions.verbose || false);
 
       const config = loadConfig(globalOptions.config);
@@ -175,8 +227,32 @@ export function registerTreeCommand(parent: Command): void {
         options.all || false,
       );
 
-      // 3. Output JSON
-      console.log(JSON.stringify(tree, null, 2));
+      // 3. Output
+      if (useText) {
+        for (const root of tree) {
+          console.log(`${root.name}/ (${root.id})`);
+          // Print test cases at root level
+          const hasMore = root.hasMoreTestCases;
+          const totalItems = root.children.length + root.testCases.length + (hasMore ? 1 : 0);
+          let itemIndex = 0;
+          for (const tc of root.testCases) {
+            itemIndex++;
+            const connector = itemIndex === totalItems ? "└── " : "├── ";
+            console.log(`${connector}${tc.key}: ${tc.name}`);
+          }
+          if (hasMore) {
+            itemIndex++;
+            const connector = itemIndex === totalItems ? "└── " : "├── ";
+            console.log(`${connector}...`);
+          }
+          // Print children
+          if (root.children.length > 0) {
+            console.log(formatTreeAsText(root.children));
+          }
+        }
+      } else {
+        console.log(JSON.stringify(tree, null, 2));
+      }
     } catch (error) {
       logger.error(formatError(error as Error));
       process.exit(1);

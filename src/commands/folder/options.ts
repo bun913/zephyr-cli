@@ -84,15 +84,18 @@ export function registerTreeOptions(command: Command): Command {
   command
     .option(
       "--max-test-cases <number>",
-      "Maximum number of test cases per folder (default: 50)",
+      "Maximum number of test cases per folder (default: 5, max: 50)",
       (val) => {
         const num = Number.parseInt(val, 10);
         if (Number.isNaN(num) || num < 1) {
           throw new Error("--max-test-cases must be a positive number");
         }
+        if (num > 50) {
+          throw new Error("--max-test-cases cannot exceed 50");
+        }
         return num;
       },
-      50,
+      5,
     )
     .option("--all", "Fetch all test cases (may take a long time)");
 
