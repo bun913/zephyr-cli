@@ -76,3 +76,33 @@ export interface FolderCreateOptions {
   folderType: "TEST_CASE" | "TEST_PLAN" | "TEST_CYCLE";
   parentId?: number;
 }
+
+/**
+ * Register options for 'folder tree' command
+ */
+export function registerTreeOptions(command: Command): Command {
+  command
+    .option(
+      "--max-test-cases <number>",
+      "Maximum number of test cases per folder (default: 50)",
+      (val) => {
+        const num = Number.parseInt(val, 10);
+        if (Number.isNaN(num) || num < 1) {
+          throw new Error("--max-test-cases must be a positive number");
+        }
+        return num;
+      },
+      50,
+    )
+    .option("--all", "Fetch all test cases (may take a long time)");
+
+  return command;
+}
+
+/**
+ * Type for 'folder tree' options
+ */
+export interface FolderTreeOptions {
+  maxTestCases: number;
+  all?: boolean;
+}
