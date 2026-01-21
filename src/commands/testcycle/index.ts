@@ -6,6 +6,7 @@ import type { Command } from "commander";
 import { registerCreateCommand } from "./create";
 import { registerGetCommand } from "./get";
 import { registerListCommand } from "./list";
+import { registerTreeCommand } from "./tree";
 import { registerUpdateCommand } from "./update";
 
 /**
@@ -19,4 +20,5 @@ export function registerTestCycleCommand(program: Command): void {
   registerGetCommand(testcycle);
   registerCreateCommand(testcycle);
   registerUpdateCommand(testcycle);
+  registerTreeCommand(testcycle);
 }

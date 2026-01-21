@@ -9,18 +9,8 @@ import type { GlobalOptions } from "../../config/types";
 import { createClient } from "../../utils/client";
 import { formatError } from "../../utils/error";
 import { logger, setLoggerVerbose } from "../../utils/logger";
+import { type FolderTreeNode, printTreeAsText } from "../../utils/tree";
 import { type FolderTreeOptions, registerTreeOptions } from "./options";
-
-/**
- * Tree node structure for output
- */
-interface FolderTreeNode {
-  id: number;
-  name: string;
-  children: FolderTreeNode[];
-  testCases: { key: string; name: string }[];
-  hasMoreTestCases: boolean;
-}
 
 /**
  * Fetch all folders with pagination
@@ -150,47 +140,6 @@ async function buildTree(
 }
 
 /**
- * Format tree as text output
- */
-function formatTreeAsText(nodes: FolderTreeNode[], prefix = ""): string {
-  const lines: string[] = [];
-
-  for (let i = 0; i < nodes.length; i++) {
-    const node = nodes[i];
-    const isLast = i === nodes.length - 1;
-    const connector = isLast ? "└── " : "├── ";
-    const childPrefix = isLast ? "    " : "│   ";
-
-    lines.push(`${prefix}${connector}${node.name}/ (${node.id})`);
-
-    // Add test cases
-    const hasMore = node.hasMoreTestCases;
-    const totalItems = node.children.length + node.testCases.length + (hasMore ? 1 : 0);
-    let itemIndex = 0;
-
-    for (const tc of node.testCases) {
-      itemIndex++;
-      const tcConnector = itemIndex === totalItems ? "└── " : "├── ";
-      lines.push(`${prefix}${childPrefix}${tcConnector}${tc.key}: ${tc.name}`);
-    }
-
-    // Show "..." if there are more test cases
-    if (hasMore) {
-      itemIndex++;
-      const moreConnector = itemIndex === totalItems ? "└── " : "├── ";
-      lines.push(`${prefix}${childPrefix}${moreConnector}...`);
-    }
-
-    // Add children recursively
-    if (node.children.length > 0) {
-      lines.push(formatTreeAsText(node.children, prefix + childPrefix));
-    }
-  }
-
-  return lines.join("\n");
-}
-
-/**
  * Register 'folder tree' command
  */
 export function registerTreeCommand(parent: Command): void {
@@ -229,27 +178,7 @@ export function registerTreeCommand(parent: Command): void {
 
       // 3. Output
       if (useText) {
-        for (const root of tree) {
-          console.log(`${root.name}/ (${root.id})`);
-          // Print test cases at root level
-          const hasMore = root.hasMoreTestCases;
-          const totalItems = root.children.length + root.testCases.length + (hasMore ? 1 : 0);
-          let itemIndex = 0;
-          for (const tc of root.testCases) {
-            itemIndex++;
-            const connector = itemIndex === totalItems ? "└── " : "├── ";
-            console.log(`${connector}${tc.key}: ${tc.name}`);
-          }
-          if (hasMore) {
-            itemIndex++;
-            const connector = itemIndex === totalItems ? "└── " : "├── ";
-            console.log(`${connector}...`);
-          }
-          // Print children
-          if (root.children.length > 0) {
-            console.log(formatTreeAsText(root.children));
-          }
-        }
+        printTreeAsText(tree);
       } else {
         console.log(JSON.stringify(tree, null, 2));
       }

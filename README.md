@@ -26,16 +26,75 @@ curl -L https://github.com/bun913/zephyr-cli/releases/latest/download/zephyr-lin
 chmod +x /usr/local/bin/zephyr
 ```
 
+## Highlights
+
+### Folder Tree View
+
+Get a tree view of all folders and test cases in your project. This is useful for understanding the structure of your test cases.
+
+> Note: This operation fetches data recursively and may take a long time for large projects.
+
+```bash
+# JSON output
+zephyr folder tree
+
+# Tree view (human-readable)
+zephyr --text folder tree
+```
+
+Output:
+```
+app1/ (30158975)
+├── CPG-T13: Test with steps
+├── ...
+├── general_user/ (30158978)
+│   ├── login/ (30158980)
+│   │   ├── validation/ (30158985)
+│   │   │   ├── CPG-T1: length
+│   │   │   └── ...
+│   │   └── office_select/ (30158984)
+│   └── user_profile/ (30158982)
+└── admin_user/ (30158979)
+```
+
+### Test Cycle Tree View
+
+Get a tree view of test cases in a specific test cycle, organized by folder structure.
+
+> Note: This operation fetches data recursively and may take a long time for large test cycles.
+
+```bash
+# JSON output
+zephyr testcycle tree CPG-R1
+
+# Tree view (human-readable)
+zephyr --text testcycle tree CPG-R1
+```
+
+Output:
+```
+app1/ (30158975)
+├── CPG-T13: Test with steps
+└── general_user/ (30158978)
+    ├── login/ (30158980)
+    │   └── validation/ (30158985)
+    │       └── CPG-T1: length
+    └── user_profile/ (30158982)
+        └── CPG-T5: change_icon
+(No Folder)/ (0)
+└── CPG-T23: Test
+```
+
 ## Commands
 
 | Command | Subcommands | Description |
 |---------|-------------|-------------|
 | `testcase` | list, get, create, update | Manage test cases |
-| `testcycle` | list, get, create, update | Manage test cycles |
+| `testcycle` | list, get, create, update, tree | Manage test cycles |
 | `testexecution` | list, get, create, update | Manage test executions |
 | `testplan` | list, get, create | Manage test plans |
 | `teststep` | list, create | Manage test steps |
-| `folder` | list, get, create | Manage folders |
+| `folder` | list, get, create, tree | Manage folders |
 | `environment` | list, get, create, update | Manage test environments |
 | `status` | list, get, create | Manage statuses |
 | `priority` | list, get, create | Manage priorities |
