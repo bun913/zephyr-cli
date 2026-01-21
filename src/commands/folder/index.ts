@@ -6,6 +6,7 @@ import type { Command } from "commander";
 import { registerCreateCommand } from "./create";
 import { registerGetCommand } from "./get";
 import { registerListCommand } from "./list";
+import { registerTreeCommand } from "./tree";
 
 /**
  * Register folder command and subcommands
@@ -17,4 +18,5 @@ export function registerFolderCommand(program: Command): void {
   registerListCommand(folder);
   registerGetCommand(folder);
   registerCreateCommand(folder);
+  registerTreeCommand(folder);
 }
