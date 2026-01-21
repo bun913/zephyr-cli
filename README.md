@@ -30,9 +30,7 @@ chmod +x /usr/local/bin/zephyr
 
 ### Folder Tree View
 
-Get a tree view of all folders and test cases in your project. This is useful for understanding the structure of your test cases.
-
-> Note: This operation fetches data recursively and may take a long time for large projects.
+Get a tree view of all folders in your project. This is useful for understanding the folder structure.
 
 ```bash
 # JSON output
@@ -45,13 +43,9 @@ zephyr --text folder tree
 Output:
 ```
 app1/ (30158975)
-├── CPG-T13: Test with steps
-├── ...
 ├── general_user/ (30158978)
 │   ├── login/ (30158980)
 │   │   ├── validation/ (30158985)
-│   │   │   ├── CPG-T1: length
-│   │   │   └── ...
 │   │   └── office_select/ (30158984)
 │   └── user_profile/ (30158982)
 └── admin_user/ (30158979)

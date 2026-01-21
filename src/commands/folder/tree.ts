@@ -10,7 +10,6 @@ import { createClient } from "../../utils/client";
 import { formatError } from "../../utils/error";
 import { logger, setLoggerVerbose } from "../../utils/logger";
 import { type FolderTreeNode, printTreeAsText } from "../../utils/tree";
-import { type FolderTreeOptions, registerTreeOptions } from "./options";
 
 /**
  * Fetch all folders with pagination
@@ -41,56 +40,9 @@ async function fetchAllFolders(client: ZephyrClient, projectKey: string): Promis
 }
 
 /**
- * Fetch test cases for a folder
+ * Build tree using adjacency list
  */
-async function fetchTestCases(
-  client: ZephyrClient,
-  projectKey: string,
-  folderId: number,
-  maxTestCases: number,
-  fetchAll: boolean,
-): Promise<{ testCases: { key: string; name: string }[]; hasMore: boolean }> {
-  const testCases: { key: string; name: string }[] = [];
-  let startAt = 0;
-  let hasMore = false;
-
-  while (true) {
-    const limit = fetchAll ? 100 : Math.min(100, maxTestCases - testCases.length + 1);
-    const response = await client.testcases.listTestCases({
-      projectKey,
-      folderId,
-      maxResults: limit,
-      startAt,
-    });
-
-    const cases = response.data.values || [];
-    for (const tc of cases) {
-      if (!fetchAll && testCases.length >= maxTestCases) {
-        hasMore = true;
-        return { testCases, hasMore };
-      }
-      testCases.push({ key: tc.key, name: tc.name });
-    }
-
-    if (!response.data.next) {
-      break;
-    }
-    startAt += 100;
-  }
-
-  return { testCases, hasMore };
-}
-
-/**
- * Build tree using adjacency list and DFS
- */
-async function buildTree(
-  client: ZephyrClient,
-  projectKey: string,
-  folders: Folder[],
-  maxTestCases: number,
-  fetchAll: boolean,
-): Promise<FolderTreeNode[]> {
+function buildTree(folders: Folder[]): FolderTreeNode[] {
   // Build adjacency list: parentId -> children
   const adjacencyList = new Map<number | null, Folder[]>();
   for (const folder of folders) {
@@ -102,89 +54,56 @@ async function buildTree(
   }
 
   // DFS to build tree
-  async function dfs(folder: Folder): Promise<FolderTreeNode> {
-    logger.debug(`Processing: ${folder.name} (ID: ${folder.id})`);
-
-    const { testCases, hasMore } = await fetchTestCases(
-      client,
-      projectKey,
-      folder.id,
-      maxTestCases,
-      fetchAll,
-    );
-    logger.debug(`  Found ${testCases.length} test case(s)${hasMore ? " (more available)" : ""}`);
-
+  function dfs(folder: Folder): FolderTreeNode {
     const children = adjacencyList.get(folder.id) || [];
-    const childNodes: FolderTreeNode[] = [];
-    for (const child of children) {
-      childNodes.push(await dfs(child));
-    }
-
     return {
       id: folder.id,
       name: folder.name,
-      children: childNodes,
-      testCases,
-      hasMoreTestCases: hasMore,
+      children: children.map(dfs),
+      testCases: [],
     };
   }
 
   // Start from root folders (parentId is null)
   const rootFolders = adjacencyList.get(null) || [];
-  const result: FolderTreeNode[] = [];
-  for (const root of rootFolders) {
-    result.push(await dfs(root));
-  }
-
-  return result;
+  return rootFolders.map(dfs);
 }
 
 /**
  * Register 'folder tree' command
  */
 export function registerTreeCommand(parent: Command): void {
-  const treeCommand = parent
+  parent
     .command("tree")
-    .description(
-      "Get folder tree with test cases recursively (this operation may take a long time)",
-    );
+    .description("Get folder tree structure recursively")
+    .action(async (_options, command) => {
+      try {
+        const globalOptions = command.parent?.parent?.opts() as GlobalOptions;
+        const useText = globalOptions.text || false;
+        setLoggerVerbose(globalOptions.verbose || false);
 
-  registerTreeOptions(treeCommand).action(async (options: FolderTreeOptions, command) => {
-    try {
-      const globalOptions = command.parent?.parent?.opts() as GlobalOptions;
-      const useText = globalOptions.text || false;
-      setLoggerVerbose(globalOptions.verbose || false);
+        const config = loadConfig(globalOptions.config);
+        const profile = getProfile(config, globalOptions.profile);
+        const client = createClient(profile);
 
-      const config = loadConfig(globalOptions.config);
-      const profile = getProfile(config, globalOptions.profile);
-      const client = createClient(profile);
+        logger.info("Fetching folder tree...");
 
-      logger.info("Fetching folder tree (this may take a while)...");
+        // 1. Fetch all folders
+        const folders = await fetchAllFolders(client, profile.projectKey);
+        logger.info(`Found ${folders.length} folder(s)`);
 
-      // 1. Fetch all folders
-      logger.info("Fetching all folders...");
-      const folders = await fetchAllFolders(client, profile.projectKey);
-      logger.info(`Found ${folders.length} folder(s)`);
+        // 2. Build tree
+        const tree = buildTree(folders);
 
-      // 2. Build tree with test cases
-      logger.info("Building tree and fetching test cases...");
-      const tree = await buildTree(
-        client,
-        profile.projectKey,
-        folders,
-        options.maxTestCases,
-        options.all || false,
-      );
-
-      // 3. Output
-      if (useText) {
-        printTreeAsText(tree);
-      } else {
-        console.log(JSON.stringify(tree, null, 2));
+        // 3. Output
+        if (useText) {
+          printTreeAsText(tree);
+        } else {
+          console.log(JSON.stringify(tree, null, 2));
+        }
+      } catch (error) {
+        logger.error(formatError(error as Error));
+        process.exit(1);
       }
-    } catch (error) {
-      logger.error(formatError(error as Error));
-      process.exit(1);
-    }
-  });
+    });
 }
