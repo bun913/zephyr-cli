@@ -79,6 +79,52 @@ app1/ (30158975)
 └── CPG-T23: Test
 ```
 
+### Snapshot (Local Cache)
+
+Export a test cycle's full data (test cases, steps, execution results, folder paths) to a local JSON file. Sort and re-sync as needed.
+
+```bash
+# Initial sync — export test cycle to a local JSON file
+zephyr snapshot sync CPG-R1 -o snapshot.json
+
+# Re-sync — update the local file with latest data from Zephyr
+zephyr snapshot sync snapshot.json
+
+# Sort by folder path, then by key within each folder
+zephyr snapshot sort snapshot.json --by folder
+
+# Sort by original Zephyr order
+zephyr snapshot sort snapshot.json --by original
+```
+
+#### `snapshot sync`
+
+```
+zephyr snapshot sync <target> [-o <path>]
+```
+
+- If `<target>` matches a test cycle key (e.g. `CPG-R1`), performs an **initial sync**. The `-o` option is required to specify the output file path.
+- If `<target>` is a file path, performs a **re-sync** — reads the existing snapshot, fetches the latest data from Zephyr, and merges changes (additions, removals, updates) back into the file.
+
+Re-sync preserves local-only fields (`originalIndex`, `excluded`) for existing test cases.
+
+#### `snapshot sort`
+
+```
+zephyr snapshot sort <file> --by <key>
+```
+
+Available sort keys:
+
+| Key | Description |
+|-----|-------------|
+| `original` | Original Zephyr test cycle order |
+| `folder` | Folder path, then key within each folder |
+| `key` | Natural sort by test case key (e.g. CPG-T1 < CPG-T2 < CPG-T10) |
+| `name` | Test case name (alphabetical) |
+| `status` | Execution status priority: Not Executed, Fail, Blocked, Pass |
+| `created` | Test case creation date |
+
 ## Commands
 
 | Command | Subcommands | Description |
@@ -94,6 +140,7 @@ app1/ (30158975)
 | `priority` | list, get, create | Manage priorities |
 | `project` | list, get | Get projects |
 | `issuelink` | testcases, testcycles, testplans, executions | Get resources linked to Jira issues |
+| `snapshot` | sync, sort | Export and manage local test cycle snapshots |
 
 ## Setup
 
