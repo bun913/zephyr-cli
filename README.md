@@ -81,7 +81,7 @@ app1/ (30158975)
 
 ### Snapshot (Local Cache)
 
-Export a test cycle's full data (test cases, steps, execution results, folder paths) to a local JSON file. Sort and re-sync as needed.
+Export a test cycle's full data (test cases, steps, execution results, folder paths) to a local JSON file. Record results, sort, and re-sync as needed.
 
 ```bash
 # Initial sync — export test cycle to a local JSON file
@@ -89,6 +89,12 @@ zephyr snapshot sync CPG-R1 -o snapshot.json
 
 # Re-sync — update the local file with latest data from Zephyr
 zephyr snapshot sync snapshot.json
+
+# Record test results (pushes to Zephyr API + updates local JSON)
+zephyr snapshot record snapshot.json CPG-T1 --status Pass
+zephyr snapshot record snapshot.json CPG-T2 --status Fail --comment "Bug found"
+zephyr snapshot record snapshot.json CPG-T3 --step 0 --status Pass
+zephyr snapshot record snapshot.json CPG-T3 --step 1 --status Fail --actual-result "Wrong error message"
 
 # Sort by folder path, then by key within each folder
 zephyr snapshot sort snapshot.json --by folder
@@ -125,6 +131,35 @@ Available sort keys:
 | `status` | Execution status priority: Not Executed, Fail, Blocked, Pass |
 | `created` | Test case creation date |
 
+#### `snapshot record`
+
+```
+zephyr snapshot record <file> <testCaseKey> --status <name> [options]
+```
+
+Record test results to Zephyr API and update the local snapshot file. The API is updated first — the local file is only written on success.
+
+**Test case level** — update the overall execution status:
+
+```bash
+zephyr snapshot record snapshot.json CPG-T1 --status Pass
+zephyr snapshot record snapshot.json CPG-T1 --status Fail --comment "Login button unresponsive"
+```
+
+**Step level** — update a specific test step result (0-based index):
+
+```bash
+zephyr snapshot record snapshot.json CPG-T1 --step 0 --status Pass
+zephyr snapshot record snapshot.json CPG-T1 --step 1 --status Fail --actual-result "Got 500 error"
+```
+
+| Option | Description |
+|--------|-------------|
+| `--status <name>` | Required. `Pass`, `Fail`, `Blocked`, or `Not Executed` |
+| `--comment <text>` | Execution comment (test case level only) |
+| `--step <index>` | Step index (0-based) to update instead of the whole execution |
+| `--actual-result <text>` | Actual result text (step level only) |
+
 ## Commands
 
 | Command | Subcommands | Description |
@@ -140,7 +175,7 @@ Available sort keys:
 | `priority` | list, get, create | Manage priorities |
 | `project` | list, get | Get projects |
 | `issuelink` | testcases, testcycles, testplans, executions | Get resources linked to Jira issues |
-| `snapshot` | sync, sort | Export and manage local test cycle snapshots |
+| `snapshot` | sync, sort, record | Export, manage, and record results for local test cycle snapshots |
 
 ## Setup
 
