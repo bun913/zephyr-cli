@@ -31,40 +31,45 @@ export function StatusBar({
       borderLeft={false}
       borderRight={false}
     >
-      <Box width="40%">
+      {/* Left: cycle info + nav keys */}
+      <Box width="50%" flexDirection="column">
         <Text>
           {snapshot.testCycleKey}: {snapshot.testCycleName}
           {isLoading ? " ⏳" : ""}
         </Text>
+        {pendingPrefix ? (
+          <Text color="cyan">
+            {pendingPrefix === "g" && "g→ g:top"}
+            {pendingPrefix === "z" && "z→ z:center t:top"}
+            {pendingPrefix === "s" && "s→ f:folder s:status k:key n:name o:original c:created"}
+          </Text>
+        ) : (
+          <Text dimColor>
+            {searchQuery ? (
+              <>
+                <Text color="yellow">/{searchQuery}</Text> n/N{" "}
+              </>
+            ) : (
+              "/:search "
+            )}
+            s:sort {activePanel === "right" ? "h:back" : "l:detail .:fold"}
+          </Text>
+        )}
       </Box>
-      <Box width="30%">
+      {/* Right: stats + action keys */}
+      <Box width="50%" flexDirection="column">
         <Text>
           <Text color="green">{stats.pass} Pass</Text> <Text color="red">{stats.fail} Fail</Text>{" "}
           <Text color="yellow">{stats.blocked} Blk</Text>{" "}
           <Text dimColor>{stats.total - stats.pass - stats.fail - stats.blocked} ---</Text>
         </Text>
-      </Box>
-      <Box width="30%">
-        {pendingPrefix ? (
-          <Text color="cyan">
-            {pendingPrefix === "g" && "g→ g:top"}
-            {pendingPrefix === "z" && "z→ z:center t:top"}
-          </Text>
-        ) : syncMessage ? (
+        {syncMessage ? (
           <Text color="cyan">{syncMessage}</Text>
         ) : errorMessage ? (
           <Text color="red">{errorMessage}</Text>
         ) : (
           <Text dimColor>
-            {searchQuery ? (
-              <>
-                <Text color="yellow">/{searchQuery}</Text> n/N:next/prev /:new{" "}
-              </>
-            ) : (
-              "/:search "
-            )}
-            gg/G:top/end zz/zt o:open S:sync{" "}
-            {activePanel === "right" ? "p/f/b:step Shift:case" : "p/f/b:all l:detail"}
+            {activePanel === "right" ? "p/f/b:step P/F/B:case" : "p/f/b:all"} o:player e:case S:sync
           </Text>
         )}
       </Box>

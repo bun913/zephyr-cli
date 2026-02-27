@@ -2,7 +2,8 @@ import { exec } from "node:child_process";
 import { Box, render, useApp, useInput, useStdout } from "ink";
 import { useCallback, useMemo, useRef, useState } from "react";
 import type { ZephyrV2Client } from "zephyr-api-client";
-import { readSnapshot } from "../../snapshot/file";
+import { readSnapshot, writeSnapshot } from "../../snapshot/file";
+import { type SortKey, sortSnapshot } from "../../snapshot/sort";
 import type { Snapshot } from "../../snapshot/types";
 import { applyFilter, type FilterSpec } from "../filter";
 import { useApiActions } from "./hooks/useApiActions";
@@ -84,6 +85,7 @@ function App({
   const [scrollHint, setScrollHint] = useState<"center" | "top" | null>(null);
   const [zPrefix, setZPrefix] = useState(false);
   const [gPrefix, setGPrefix] = useState(false);
+  const [sPrefix, setSPrefix] = useState(false);
 
   const selectedTestCase = actions.getSelectedTestCase();
 
@@ -213,6 +215,35 @@ function App({
         return;
       }
 
+      // s prefix for sort
+      if (sPrefix) {
+        setSPrefix(false);
+        const sortKeyMap: Record<string, SortKey> = {
+          f: "folder",
+          s: "status",
+          k: "key",
+          n: "name",
+          o: "original",
+          c: "created",
+        };
+        const sortKey = sortKeyMap[input];
+        if (sortKey) {
+          const sorted = sortSnapshot({ ...state.snapshot }, sortKey);
+          writeSnapshot(filePath, sorted);
+          const newIndices = applyFilter(sorted.testCases, filter);
+          setCurrentFilteredIndices(newIndices);
+          actions.updateSnapshot(sorted);
+          setSyncMessage(`Sorted by ${sortKey}`);
+          if (syncMessageTimerRef.current) clearTimeout(syncMessageTimerRef.current);
+          syncMessageTimerRef.current = setTimeout(() => setSyncMessage(undefined), 3000);
+        }
+        return;
+      }
+      if (input === "s") {
+        setSPrefix(true);
+        return;
+      }
+
       // g prefix for gg (go to top)
       if (gPrefix) {
         setGPrefix(false);
@@ -282,6 +313,25 @@ function App({
           setSyncMessage(`Copied "${testCaseKey}" - paste in Search box`);
           if (syncMessageTimerRef.current) clearTimeout(syncMessageTimerRef.current);
           syncMessageTimerRef.current = setTimeout(() => setSyncMessage(undefined), 10000);
+        }
+        return;
+      }
+
+      // Edit test case in browser: e
+      if (input === "e" && selectedTestCase) {
+        if (!jiraBaseUrl) {
+          actions.setError("jiraBaseUrl not set in profile");
+        } else {
+          const base = jiraBaseUrl.replace(/\/+$/, "");
+          const testCaseKey = selectedTestCase.testCase.key;
+          const url = `${base}/projects/${projectKey}?selectedItem=com.atlassian.plugins.atlassian-connect-plugin:com.kanoah.test-manager__main-project-page#!/v2/testCase/${testCaseKey}`;
+          const openCmd =
+            process.platform === "darwin"
+              ? `open "${url}"`
+              : process.platform === "win32"
+                ? `start "" "${url}"`
+                : `xdg-open "${url}"`;
+          exec(openCmd);
         }
         return;
       }
@@ -420,7 +470,7 @@ function App({
         stats={stats}
         syncMessage={syncMessage}
         searchQuery={searchQuery}
-        pendingPrefix={gPrefix ? "g" : zPrefix ? "z" : undefined}
+        pendingPrefix={sPrefix ? "s" : gPrefix ? "g" : zPrefix ? "z" : undefined}
       />
       {pendingInput && (
         <TextInputOverlay
