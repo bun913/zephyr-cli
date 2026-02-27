@@ -12,24 +12,59 @@ import { RightPanel } from "./RightPanel";
 import { StatusBar } from "./StatusBar";
 import { TextInputOverlay } from "./TextInputOverlay";
 
+type SyncPhase = "confirm" | "syncing" | null;
+
 interface AppProps {
   filePath: string;
   client: ZephyrV2Client;
   projectKey: string;
   initialSnapshot: Snapshot;
   filteredIndices: number[];
+  filter?: FilterSpec;
 }
 
-function App({ filePath, client, projectKey, initialSnapshot, filteredIndices }: AppProps) {
+function App({
+  filePath,
+  client,
+  projectKey,
+  initialSnapshot,
+  filteredIndices: initialFilteredIndices,
+  filter,
+}: AppProps) {
   const { exit } = useApp();
   const { stdout } = useStdout();
   const termHeight = stdout?.rows ?? 24;
 
-  const [state, actions] = useSnapshotState(initialSnapshot, filteredIndices);
+  const [currentFilteredIndices, setCurrentFilteredIndices] =
+    useState<number[]>(initialFilteredIndices);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const [state, actions] = useSnapshotState(initialSnapshot, currentFilteredIndices);
   const snapshotRef = useRef(state.snapshot);
   snapshotRef.current = state.snapshot;
 
-  const { pushStep, pushExecution } = useApiActions({
+  // Search: compute matching flatListItem indices for n/N jump
+  const matchIndices = useMemo(() => {
+    if (!searchQuery) return [];
+    const q = searchQuery.toLowerCase();
+    const indices: number[] = [];
+    for (let i = 0; i < state.flatListItems.length; i++) {
+      const item = state.flatListItems[i];
+      if (item.type === "testCase") {
+        const tc = item.testCase;
+        if (
+          tc.key.toLowerCase().includes(q) ||
+          tc.name.toLowerCase().includes(q) ||
+          tc.folderPath.toLowerCase().includes(q)
+        ) {
+          indices.push(i);
+        }
+      }
+    }
+    return indices;
+  }, [searchQuery, state.flatListItems]);
+
+  const { pushStep, pushAllSteps, pushExecution, syncSnapshot } = useApiActions({
     client,
     projectKey,
     filePath,
@@ -40,6 +75,9 @@ function App({ filePath, client, projectKey, initialSnapshot, filteredIndices }:
   });
 
   const [pendingInput, setPendingInput] = useState<InputMode | null>(null);
+  const [syncPhase, setSyncPhase] = useState<SyncPhase>(null);
+  const [syncMessage, setSyncMessage] = useState<string | undefined>(undefined);
+  const syncMessageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectedTestCase = actions.getSelectedTestCase();
 
@@ -47,7 +85,7 @@ function App({ filePath, client, projectKey, initialSnapshot, filteredIndices }:
     let pass = 0;
     let fail = 0;
     let blocked = 0;
-    for (const idx of filteredIndices) {
+    for (const idx of currentFilteredIndices) {
       const tc = state.snapshot.testCases[idx];
       switch (tc.execution.status) {
         case "Pass":
@@ -61,12 +99,58 @@ function App({ filePath, client, projectKey, initialSnapshot, filteredIndices }:
           break;
       }
     }
-    return { pass, fail, blocked, total: filteredIndices.length };
-  }, [state.snapshot, filteredIndices]);
+    return { pass, fail, blocked, total: currentFilteredIndices.length };
+  }, [state.snapshot, currentFilteredIndices]);
+
+  const runSync = useCallback(async () => {
+    setSyncPhase("syncing");
+    setSyncMessage("Syncing...");
+    try {
+      const result = await syncSnapshot((msg) => setSyncMessage(msg));
+      const newIndices = applyFilter(result.snapshot.testCases, filter);
+      setCurrentFilteredIndices(newIndices);
+      setSyncPhase(null);
+      setSyncMessage(
+        `Synced: +${result.added.length} -${result.removed.length} ~${result.updated.length}`,
+      );
+      if (syncMessageTimerRef.current) clearTimeout(syncMessageTimerRef.current);
+      syncMessageTimerRef.current = setTimeout(() => setSyncMessage(undefined), 5000);
+    } catch (error) {
+      setSyncPhase(null);
+      setSyncMessage(undefined);
+      actions.setError(`Sync failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  }, [syncSnapshot, filter, actions]);
 
   const handleInputSubmit = useCallback(
     async (value: string) => {
-      if (!pendingInput || !selectedTestCase) {
+      if (!pendingInput) return;
+
+      if (pendingInput.kind === "search") {
+        setSearchQuery(value);
+        // Jump to first match
+        if (value) {
+          const q = value.toLowerCase();
+          for (let i = 0; i < state.flatListItems.length; i++) {
+            const item = state.flatListItems[i];
+            if (item.type === "testCase") {
+              const tc = item.testCase;
+              if (
+                tc.key.toLowerCase().includes(q) ||
+                tc.name.toLowerCase().includes(q) ||
+                tc.folderPath.toLowerCase().includes(q)
+              ) {
+                actions.moveLeftCursor(i - state.leftCursor);
+                break;
+              }
+            }
+          }
+        }
+        setPendingInput(null);
+        return;
+      }
+
+      if (!selectedTestCase) {
         setPendingInput(null);
         return;
       }
@@ -84,21 +168,69 @@ function App({ filePath, client, projectKey, initialSnapshot, filteredIndices }:
 
       setPendingInput(null);
     },
-    [pendingInput, selectedTestCase, pushStep, pushExecution],
+    [
+      pendingInput,
+      selectedTestCase,
+      pushStep,
+      pushExecution,
+      state.flatListItems,
+      state.leftCursor,
+      actions,
+    ],
   );
 
   const handleInputCancel = useCallback(() => {
     setPendingInput(null);
   }, []);
 
+  // Sync confirm handler
   useInput(
     (input, key) => {
-      // Don't process keys during input mode or loading
-      if (pendingInput || state.isLoading) return;
+      if (input === "y") {
+        runSync();
+      } else if (input === "n" || key.escape) {
+        setSyncPhase(null);
+        setSyncMessage(undefined);
+      }
+    },
+    { isActive: syncPhase === "confirm" },
+  );
+
+  useInput(
+    (input, key) => {
+      // Don't process keys during input mode, loading, or sync
+      if (pendingInput || state.isLoading || syncPhase) return;
 
       // Quit
       if (input === "q") {
         exit();
+        return;
+      }
+
+      // Sync: Shift+S
+      if (input === "S") {
+        setSyncPhase("confirm");
+        setSyncMessage("Sync now? (y/n)");
+        return;
+      }
+
+      // Search: /
+      if (input === "/") {
+        setPendingInput({ kind: "search" });
+        return;
+      }
+
+      // Search navigation: n/N to jump between matches
+      if (matchIndices.length > 0 && input === "n") {
+        const target = matchIndices.find((i) => i > state.leftCursor) ?? matchIndices[0];
+        if (target !== undefined) actions.moveLeftCursor(target - state.leftCursor);
+        return;
+      }
+      if (matchIndices.length > 0 && input === "N") {
+        const target =
+          [...matchIndices].reverse().find((i) => i < state.leftCursor) ??
+          matchIndices[matchIndices.length - 1];
+        if (target !== undefined) actions.moveLeftCursor(target - state.leftCursor);
         return;
       }
 
@@ -114,6 +246,12 @@ function App({ filePath, client, projectKey, initialSnapshot, filteredIndices }:
           actions.moveLeftCursor(1);
         } else if (input === "k" || key.upArrow) {
           actions.moveLeftCursor(-1);
+        } else if (input === ".") {
+          actions.toggleAllFolders();
+        } else if (input === "l" || key.rightArrow) {
+          if (selectedTestCase) {
+            actions.setActivePanel("right");
+          }
         } else if (key.return || input === " ") {
           const item = state.flatListItems[state.leftCursor];
           if (item?.type === "folder") {
@@ -122,8 +260,22 @@ function App({ filePath, client, projectKey, initialSnapshot, filteredIndices }:
             actions.setActivePanel("right");
           }
         }
+        // Bulk step status: p/f/b on selected test case
+        else if (input === "p" && selectedTestCase) {
+          pushAllSteps(selectedTestCase.index, "Pass");
+        } else if (input === "f" && selectedTestCase) {
+          pushAllSteps(selectedTestCase.index, "Fail");
+        } else if (input === "b" && selectedTestCase) {
+          pushAllSteps(selectedTestCase.index, "Blocked");
+        }
       } else if (state.activePanel === "right") {
         if (!selectedTestCase) return;
+
+        // Back to left panel
+        if (input === "h" || key.leftArrow) {
+          actions.setActivePanel("left");
+          return;
+        }
 
         // Step navigation
         if (input === "j" || key.downArrow) {
@@ -131,34 +283,34 @@ function App({ filePath, client, projectKey, initialSnapshot, filteredIndices }:
         } else if (input === "k" || key.upArrow) {
           actions.moveRightCursor(-1);
         }
-        // Step status: p/f/b
+        // Step status: p/f/b (immediate)
         else if (input === "p" && selectedTestCase.testCase.steps.length > 0) {
-          // Pass: immediate push
           pushStep(selectedTestCase.index, state.rightCursor, "Pass");
         } else if (input === "f" && selectedTestCase.testCase.steps.length > 0) {
-          setPendingInput({
-            kind: "stepActualResult",
-            stepIndex: state.rightCursor,
-            status: "Fail",
-          });
+          pushStep(selectedTestCase.index, state.rightCursor, "Fail");
         } else if (input === "b" && selectedTestCase.testCase.steps.length > 0) {
+          pushStep(selectedTestCase.index, state.rightCursor, "Blocked");
+        }
+        // Enter: input text for step actualResult
+        else if (key.return && selectedTestCase.testCase.steps.length > 0) {
           setPendingInput({
             kind: "stepActualResult",
             stepIndex: state.rightCursor,
-            status: "Blocked",
+            status:
+              selectedTestCase.testCase.steps[state.rightCursor].result.status ?? "Not Executed",
           });
         }
-        // Execution status: P/F/B
+        // Execution status: P/F/B (immediate)
         else if (input === "P") {
           pushExecution(selectedTestCase.index, "Pass");
         } else if (input === "F") {
-          setPendingInput({ kind: "executionComment", status: "Fail" });
+          pushExecution(selectedTestCase.index, "Fail");
         } else if (input === "B") {
-          setPendingInput({ kind: "executionComment", status: "Blocked" });
+          pushExecution(selectedTestCase.index, "Blocked");
         }
       }
     },
-    { isActive: !pendingInput },
+    { isActive: !pendingInput && syncPhase !== "confirm" },
   );
 
   const panelHeight = termHeight - 3; // Reserve for status bar
@@ -169,14 +321,14 @@ function App({ filePath, client, projectKey, initialSnapshot, filteredIndices }:
         <LeftPanel
           items={state.flatListItems}
           cursor={state.leftCursor}
-          isFocused={state.activePanel === "left" && !pendingInput}
+          isFocused={state.activePanel === "left" && !pendingInput && !syncPhase}
           expandedFolders={state.expandedFolders}
           height={panelHeight}
         />
         <RightPanel
           testCase={selectedTestCase?.testCase ?? null}
           stepCursor={state.rightCursor}
-          isFocused={state.activePanel === "right" && !pendingInput}
+          isFocused={state.activePanel === "right" && !pendingInput && !syncPhase}
           height={panelHeight}
         />
       </Box>
@@ -186,6 +338,8 @@ function App({ filePath, client, projectKey, initialSnapshot, filteredIndices }:
         errorMessage={state.errorMessage}
         activePanel={state.activePanel}
         stats={stats}
+        syncMessage={syncMessage}
+        searchQuery={searchQuery}
       />
       {pendingInput && (
         <TextInputOverlay
@@ -223,6 +377,7 @@ export function renderPlayTUI(options: RenderPlayTUIOptions): void {
       projectKey={projectKey}
       initialSnapshot={snapshot}
       filteredIndices={filteredIndices}
+      filter={filter}
     />,
     { exitOnCtrlC: true },
   );

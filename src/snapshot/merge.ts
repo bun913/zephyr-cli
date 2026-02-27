@@ -74,6 +74,12 @@ function buildTestCase(
   return {
     key: testCaseKey,
     name: tc?.name ?? "",
+    objective: tc?.objective ?? "",
+    precondition: tc?.precondition ?? "",
+    estimatedTime: tc?.estimatedTime ?? null,
+    labels: tc?.labels ?? [],
+    component: tc?.component ?? null,
+    customFields: tc?.customFields ?? {},
     folderId: tc?.folderId ?? null,
     folderPath: buildFolderPath(tc?.folderId ?? null, data.folders),
     createdAt: tc?.createdOn ?? "",

@@ -17,7 +17,10 @@ export type FlatListItem =
 
 export type InputMode =
   | { kind: "stepActualResult"; stepIndex: number; status: string }
-  | { kind: "executionComment"; status: string };
+  | { kind: "executionComment"; status: string }
+  | { kind: "syncConfirm" }
+  | { kind: "syncing" }
+  | { kind: "search" };
 
 export interface TreeNode {
   name: string;

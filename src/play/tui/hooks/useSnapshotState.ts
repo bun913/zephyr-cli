@@ -21,6 +21,7 @@ export interface SnapshotActions {
   moveLeftCursor: (delta: number) => void;
   moveRightCursor: (delta: number) => void;
   toggleFolder: (path: string) => void;
+  toggleAllFolders: () => void;
   setActivePanel: (panel: "left" | "right") => void;
   setInputMode: (mode: InputMode | null) => void;
   setLoading: (loading: boolean) => void;
@@ -36,7 +37,6 @@ export function useSnapshotState(
   const [snapshot, setSnapshot] = useState<Snapshot>(initialSnapshot);
   const [leftCursor, setLeftCursor] = useState(0);
   const [rightCursor, setRightCursor] = useState(0);
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [activePanel, setActivePanel] = useState<"left" | "right">("left");
   const [inputMode, setInputMode] = useState<InputMode | null>(null);
   const [isLoading, setLoading] = useState(false);
@@ -46,6 +46,20 @@ export function useSnapshotState(
     () => buildFolderTree(snapshot.testCases, filteredIndices),
     [snapshot.testCases, filteredIndices],
   );
+
+  // Expand all folders by default
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => {
+    const initialTree = buildFolderTree(initialSnapshot.testCases, filteredIndices);
+    const allPaths = new Set<string>();
+    const collect = (nodes: TreeNode[]) => {
+      for (const node of nodes) {
+        allPaths.add(node.fullPath);
+        collect(node.children);
+      }
+    };
+    collect(initialTree);
+    return allPaths;
+  });
 
   const flatListItems = useMemo(
     () => flattenTree(treeNodes, expandedFolders, snapshot.testCases),
@@ -103,6 +117,21 @@ export function useSnapshotState(
     });
   }, []);
 
+  const toggleAllFolders = useCallback(() => {
+    setExpandedFolders((prev) => {
+      if (prev.size > 0) return new Set();
+      const allPaths = new Set<string>();
+      const collect = (nodes: TreeNode[]) => {
+        for (const node of nodes) {
+          allPaths.add(node.fullPath);
+          collect(node.children);
+        }
+      };
+      collect(treeNodes);
+      return allPaths;
+    });
+  }, [treeNodes]);
+
   const updateSnapshot = useCallback((newSnapshot: Snapshot) => {
     setSnapshot(newSnapshot);
   }, []);
@@ -125,6 +154,7 @@ export function useSnapshotState(
     moveLeftCursor,
     moveRightCursor,
     toggleFolder,
+    toggleAllFolders,
     setActivePanel,
     setInputMode,
     setLoading,

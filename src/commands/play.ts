@@ -28,6 +28,7 @@ export function registerPlayCommand(program: Command): void {
           client,
           projectKey: profile.projectKey,
           filter,
+          jiraBaseUrl: profile.jiraBaseUrl,
         });
       } catch (error) {
         logger.error(formatError(error as Error));

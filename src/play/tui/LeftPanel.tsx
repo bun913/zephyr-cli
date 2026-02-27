@@ -58,7 +58,7 @@ export function LeftPanel({ items, cursor, isFocused, expandedFolders, height }:
 
         if (item.type === "folder") {
           const isExpanded = expandedFolders.has(item.path);
-          const arrow = isExpanded ? "v" : ">";
+          const icon = isExpanded ? "📂" : "📁";
           return (
             <Box key={`folder-${item.path}`}>
               <Text
@@ -66,7 +66,7 @@ export function LeftPanel({ items, cursor, isFocused, expandedFolders, height }:
                 color={isSelected && isFocused ? "black" : undefined}
               >
                 {indent}
-                {arrow} {item.name} ({item.childCount})
+                {icon} {item.name} ({item.childCount})
               </Text>
             </Box>
           );

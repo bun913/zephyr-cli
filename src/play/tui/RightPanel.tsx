@@ -34,6 +34,28 @@ function statusLabel(status: string | null): string {
   }
 }
 
+/** Replace <br>, <br/>, <br /> tags with newlines */
+function br2nl(text: string): string {
+  return text.replace(/<br\s*\/?>/gi, "\n");
+}
+
+function ExtraFields({ customFields }: { customFields?: Record<string, unknown> }) {
+  if (!customFields) return null;
+  const entries = Object.entries(customFields).filter(
+    ([, v]) => v != null && v !== "" && !(Array.isArray(v) && v.length === 0),
+  );
+  if (entries.length === 0) return null;
+  return (
+    <>
+      {entries.map(([key, value]) => (
+        <Text key={key} dimColor>
+          {key}: {String(value)}
+        </Text>
+      ))}
+    </>
+  );
+}
+
 export function RightPanel({ testCase, stepCursor, isFocused, height }: RightPanelProps) {
   if (!testCase) {
     return (
@@ -68,7 +90,27 @@ export function RightPanel({ testCase, stepCursor, isFocused, height }: RightPan
       <Text>
         Status: <Text color={statusColor(execStatus)}>{execStatus || "Not Executed"}</Text>
       </Text>
-      {testCase.execution.comment && <Text dimColor>Comment: {testCase.execution.comment}</Text>}
+      {testCase.objective && (
+        <Text wrap="wrap" dimColor>
+          Objective: {br2nl(testCase.objective)}
+        </Text>
+      )}
+      {testCase.precondition && (
+        <Text wrap="wrap" dimColor>
+          Precondition: {br2nl(testCase.precondition)}
+        </Text>
+      )}
+      {testCase.labels?.length > 0 && <Text dimColor>Labels: {testCase.labels.join(", ")}</Text>}
+      {testCase.component && <Text dimColor>Component: {testCase.component}</Text>}
+      {testCase.estimatedTime != null && (
+        <Text dimColor>Estimated: {testCase.estimatedTime}ms</Text>
+      )}
+      {testCase.execution.comment && (
+        <Text wrap="wrap" dimColor>
+          Comment: {br2nl(testCase.execution.comment)}
+        </Text>
+      )}
+      <ExtraFields customFields={testCase.customFields} />
       <Text> </Text>
 
       {testCase.steps.length === 0 ? (
@@ -85,22 +127,34 @@ export function RightPanel({ testCase, stepCursor, isFocused, height }: RightPan
             return (
               <Box key={`step-${step.index}`} flexDirection="column">
                 <Text
+                  wrap="wrap"
                   backgroundColor={isSelected && isFocused ? "blue" : undefined}
                   color={isSelected && isFocused ? "white" : undefined}
                 >
-                  {marker} {actualStepIdx + 1}. {step.description}
+                  {marker} {actualStepIdx + 1}. {br2nl(step.description)}
                   {"  "}
                   <Text color={isSelected && isFocused ? "white" : statusColor(stepStatus)}>
                     {statusLabel(stepStatus)}
                   </Text>
                 </Text>
                 {isSelected && step.expectedResult && (
-                  <Text dimColor> Expected: {step.expectedResult}</Text>
+                  <Text wrap="wrap" dimColor>
+                    {" "}
+                    Expected: {br2nl(step.expectedResult)}
+                  </Text>
                 )}
                 {isSelected && step.result.actualResult && (
-                  <Text dimColor> Actual: {step.result.actualResult}</Text>
+                  <Text wrap="wrap" dimColor>
+                    {" "}
+                    Actual: {br2nl(step.result.actualResult)}
+                  </Text>
                 )}
-                {isSelected && step.testData && <Text dimColor> TestData: {step.testData}</Text>}
+                {isSelected && step.testData && (
+                  <Text wrap="wrap" dimColor>
+                    {" "}
+                    TestData: {br2nl(step.testData)}
+                  </Text>
+                )}
               </Box>
             );
           })}

@@ -7,6 +7,8 @@ interface StatusBarProps {
   errorMessage: string | null;
   activePanel: "left" | "right";
   stats: { pass: number; fail: number; blocked: number; total: number };
+  syncMessage?: string;
+  searchQuery?: string;
 }
 
 export function StatusBar({
@@ -15,6 +17,8 @@ export function StatusBar({
   errorMessage,
   activePanel,
   stats,
+  syncMessage,
+  searchQuery,
 }: StatusBarProps) {
   return (
     <Box
@@ -39,12 +43,23 @@ export function StatusBar({
         </Text>
       </Box>
       <Box width="30%">
-        {errorMessage ? (
+        {syncMessage ? (
+          <Text color="cyan">{syncMessage}</Text>
+        ) : errorMessage ? (
           <Text color="red">{errorMessage}</Text>
         ) : (
           <Text dimColor>
-            Tab:switch{" "}
-            {activePanel === "right" ? "p/f/b:step  P/F/B:case" : "Enter:expand  j/k:move"}
+            {searchQuery ? (
+              <>
+                <Text color="yellow">/{searchQuery}</Text> n/N:next/prev /:new{" "}
+              </>
+            ) : (
+              "/:search "
+            )}
+            Tab:switch S:sync{" "}
+            {activePanel === "right"
+              ? "h:back  p/f/b:step  Shift:case"
+              : "p/f/b:allSteps  l:detail"}
           </Text>
         )}
       </Box>

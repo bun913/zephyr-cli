@@ -12,7 +12,9 @@ export function TextInputOverlay({ inputMode, onSubmit, onCancel }: TextInputOve
   const label =
     inputMode.kind === "stepActualResult"
       ? `Actual result for step ${inputMode.stepIndex + 1} (${inputMode.status}):`
-      : `Comment for ${inputMode.status}:`;
+      : inputMode.kind === "search"
+        ? "Search (key / name / folder):"
+        : `Comment for ${inputMode.status}:`;
 
   useInput((_input, key) => {
     if (key.escape) {
