@@ -1,12 +1,12 @@
 # Dependencies
 node_modules/
-bun.lockb
+bun.lock
 
 # Build outputs
 dist/
 *.exe
-zephyr
-zephyr-*
+/zephyr
+/zephyr-*
 
 # Generated files
 src/generated/
