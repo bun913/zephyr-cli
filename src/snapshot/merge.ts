@@ -4,7 +4,6 @@ import type {
   FetchedSingleTestCaseData,
   FetchedTestStep,
 } from "./fetch";
-import { calcOriginalIndex } from "./fractional-index";
 import type { Snapshot, SnapshotExecution, SnapshotStep, SnapshotTestCase } from "./types";
 
 export interface MergeResult {
@@ -120,7 +119,8 @@ export function mergeSnapshot(local: Snapshot, data: FetchedCycleData): MergeRes
     remoteExecMap.set(exec.testCaseKey, { executionId: exec.id });
   }
 
-  const zephyrOrder = data.executions.map((e) => e.testCaseKey);
+  // Build Zephyr-order index map (testCaseKey → sequential index)
+  const zephyrIndexMap = new Map(data.executions.map((e, i) => [e.testCaseKey, i]));
 
   const added: string[] = [];
   const removed: string[] = [];
@@ -132,13 +132,9 @@ export function mergeSnapshot(local: Snapshot, data: FetchedCycleData): MergeRes
   for (const localCase of local.testCases) {
     const remote = remoteExecMap.get(localCase.key);
     if (remote) {
-      // Update from remote, keeping originalIndex and excluded
-      const updatedCase = buildTestCase(
-        remote.executionId,
-        localCase.key,
-        localCase.originalIndex,
-        data,
-      );
+      // Update from remote, reassign originalIndex to Zephyr order
+      const zephyrIndex = zephyrIndexMap.get(localCase.key) ?? localCase.originalIndex;
+      const updatedCase = buildTestCase(remote.executionId, localCase.key, zephyrIndex, data);
       updatedCase.excluded = localCase.excluded;
       newTestCases.push(updatedCase);
       updated.push(localCase.key);
@@ -152,7 +148,7 @@ export function mergeSnapshot(local: Snapshot, data: FetchedCycleData): MergeRes
   // Remaining in remote → new items
   for (const exec of data.executions) {
     if (!processedKeys.has(exec.testCaseKey)) {
-      const originalIndex = calcOriginalIndex(zephyrOrder, exec.testCaseKey, newTestCases);
+      const originalIndex = zephyrIndexMap.get(exec.testCaseKey) ?? newTestCases.length;
       const newCase = buildTestCase(exec.id, exec.testCaseKey, originalIndex, data);
       newTestCases.push(newCase);
       added.push(exec.testCaseKey);

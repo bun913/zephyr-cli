@@ -26,6 +26,31 @@ curl -L https://github.com/bun913/zephyr-cli/releases/latest/download/zephyr-lin
 chmod +x /usr/local/bin/zephyr
 ```
 
+## Recommended Usage
+
+This CLI is designed to be used by both **humans** and **AI agents**.
+
+- **Manual testing**: Use `zephyr play` to interactively record test results step by step in a terminal UI.
+- **AI-assisted testing**: Every operation available in the `play` TUI is also exposed as a standalone CLI command (`snapshot record`, `testexecution create/update`, etc.), so AI agents can drive the exact same workflow programmatically.
+- **AI agent integration**: A [Claude Code skill definition](.claude/skills/zephyr/SKILL.md) is included. AI agents can read it to understand all available commands and automate Zephyr Scale operations end-to-end.
+
+### Quick Start
+
+```bash
+# 1. Interactive setup — select a test cycle and create a snapshot
+zephyr play init
+
+# 2. Sort by folder for a logical ordering
+zephyr snapshot sort PRJ-R1.json --by folder
+
+# 3a. Manual: launch the interactive TUI
+zephyr play PRJ-R1.json
+
+# 3b. AI / CLI: record results programmatically
+zephyr snapshot record PRJ-R1.json PRJ-T123 --status Pass
+zephyr snapshot record PRJ-R1.json PRJ-T456 --status Fail --comment "Button not visible"
+```
+
 ## Highlights
 
 ### Folder Tree View
