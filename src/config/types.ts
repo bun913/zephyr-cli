@@ -11,6 +11,8 @@ export interface Profile {
   apiToken: string;
   /** Default Jira project key */
   projectKey: string;
+  /** Jira base URL for "open" command (e.g., "https://your-domain.atlassian.net") */
+  jiraBaseUrl?: string;
 }
 
 /**

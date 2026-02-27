@@ -4,6 +4,8 @@ import { Command } from "commander";
 import { registerEnvironmentCommand } from "./commands/environment";
 import { registerFolderCommand } from "./commands/folder";
 import { registerIssueLinkCommand } from "./commands/issuelink";
+import { registerOpenCommand } from "./commands/open";
+import { registerPlayCommand } from "./commands/play";
 import { registerPriorityCommand } from "./commands/priority";
 import { registerProjectCommand } from "./commands/project";
 import { registerSnapshotCommand } from "./commands/snapshot";
@@ -43,6 +45,8 @@ function main() {
   registerProjectCommand(program);
   registerIssueLinkCommand(program);
   registerSnapshotCommand(program);
+  registerPlayCommand(program);
+  registerOpenCommand(program);
 
   // Parse arguments
   program.parse(process.argv);

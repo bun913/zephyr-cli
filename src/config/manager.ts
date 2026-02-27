@@ -108,6 +108,10 @@ function validateConfig(config: unknown): asserts config is Config {
     if (!prof.projectKey || typeof prof.projectKey !== "string") {
       throw new ConfigError(`Profile '${name}' must have a 'projectKey' field`);
     }
+
+    if (prof.jiraBaseUrl !== undefined && typeof prof.jiraBaseUrl !== "string") {
+      throw new ConfigError(`Profile '${name}': 'jiraBaseUrl' must be a string`);
+    }
   }
 }
 
