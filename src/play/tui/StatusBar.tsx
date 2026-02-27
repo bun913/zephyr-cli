@@ -69,7 +69,8 @@ export function StatusBar({
           <Text color="red">{errorMessage}</Text>
         ) : (
           <Text dimColor>
-            {activePanel === "right" ? "p/f/b:step P/F/B:case" : "p/f/b:all"} o:open player e:edit case S:sync
+            {activePanel === "right" ? "p/f/b:step P/F/B:case" : "p/f/b:all"} o:open player e:edit
+            case S:sync
           </Text>
         )}
       </Box>
