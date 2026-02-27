@@ -9,6 +9,7 @@ interface StatusBarProps {
   stats: { pass: number; fail: number; blocked: number; total: number };
   syncMessage?: string;
   searchQuery?: string;
+  pendingPrefix?: string;
 }
 
 export function StatusBar({
@@ -19,6 +20,7 @@ export function StatusBar({
   stats,
   syncMessage,
   searchQuery,
+  pendingPrefix,
 }: StatusBarProps) {
   return (
     <Box
@@ -43,7 +45,12 @@ export function StatusBar({
         </Text>
       </Box>
       <Box width="30%">
-        {syncMessage ? (
+        {pendingPrefix ? (
+          <Text color="cyan">
+            {pendingPrefix === "g" && "g→ g:top"}
+            {pendingPrefix === "z" && "z→ z:center t:top"}
+          </Text>
+        ) : syncMessage ? (
           <Text color="cyan">{syncMessage}</Text>
         ) : errorMessage ? (
           <Text color="red">{errorMessage}</Text>
@@ -56,10 +63,8 @@ export function StatusBar({
             ) : (
               "/:search "
             )}
-            Tab:switch S:sync{" "}
-            {activePanel === "right"
-              ? "h:back  p/f/b:step  Shift:case"
-              : "p/f/b:allSteps  l:detail"}
+            gg/G:top/end zz/zt o:open S:sync{" "}
+            {activePanel === "right" ? "p/f/b:step Shift:case" : "p/f/b:all l:detail"}
           </Text>
         )}
       </Box>

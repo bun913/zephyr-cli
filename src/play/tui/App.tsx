@@ -1,3 +1,4 @@
+import { exec } from "node:child_process";
 import { Box, render, useApp, useInput, useStdout } from "ink";
 import { useCallback, useMemo, useRef, useState } from "react";
 import type { ZephyrV2Client } from "zephyr-api-client";
@@ -21,6 +22,7 @@ interface AppProps {
   initialSnapshot: Snapshot;
   filteredIndices: number[];
   filter?: FilterSpec;
+  jiraBaseUrl?: string;
 }
 
 function App({
@@ -30,6 +32,7 @@ function App({
   initialSnapshot,
   filteredIndices: initialFilteredIndices,
   filter,
+  jiraBaseUrl,
 }: AppProps) {
   const { exit } = useApp();
   const { stdout } = useStdout();
@@ -78,6 +81,9 @@ function App({
   const [syncPhase, setSyncPhase] = useState<SyncPhase>(null);
   const [syncMessage, setSyncMessage] = useState<string | undefined>(undefined);
   const syncMessageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [scrollHint, setScrollHint] = useState<"center" | "top" | null>(null);
+  const [zPrefix, setZPrefix] = useState(false);
+  const [gPrefix, setGPrefix] = useState(false);
 
   const selectedTestCase = actions.getSelectedTestCase();
 
@@ -207,6 +213,66 @@ function App({
         return;
       }
 
+      // g prefix for gg (go to top)
+      if (gPrefix) {
+        setGPrefix(false);
+        if (input === "g") {
+          actions.moveLeftCursor(-state.leftCursor);
+        }
+        return;
+      }
+      if (input === "g") {
+        setGPrefix(true);
+        return;
+      }
+      // G: go to bottom
+      if (input === "G") {
+        actions.moveLeftCursor(state.flatListItems.length - 1 - state.leftCursor);
+        return;
+      }
+
+      // z prefix for zz/zt
+      if (zPrefix) {
+        setZPrefix(false);
+        if (input === "z") {
+          setScrollHint("center");
+          // Clear after one render
+          setTimeout(() => setScrollHint(null), 0);
+          return;
+        }
+        if (input === "t") {
+          setScrollHint("top");
+          setTimeout(() => setScrollHint(null), 0);
+          return;
+        }
+        return; // unknown z-combo, ignore
+      }
+      if (input === "z") {
+        setZPrefix(true);
+        return;
+      }
+
+      // Open in browser: o
+      if (input === "o" && selectedTestCase) {
+        if (!jiraBaseUrl) {
+          actions.setError("jiraBaseUrl not set in profile");
+        } else {
+          const base = jiraBaseUrl.replace(/\/+$/, "");
+          const cycleKey = state.snapshot.testCycleKey;
+          // assignedTestCaseId is an internal Zephyr UI ID not available via REST API v2
+          // Open test player at cycle level; user selects test case in the UI
+          const url = `${base}/projects/${projectKey}?selectedItem=com.atlassian.plugins.atlassian-connect-plugin:com.kanoah.test-manager__main-project-page#!/v2/testPlayer/${cycleKey}`;
+          const cmd =
+            process.platform === "darwin"
+              ? `open "${url}"`
+              : process.platform === "win32"
+                ? `start "" "${url}"`
+                : `xdg-open "${url}"`;
+          exec(cmd);
+        }
+        return;
+      }
+
       // Sync: Shift+S
       if (input === "S") {
         setSyncPhase("confirm");
@@ -324,6 +390,7 @@ function App({
           isFocused={state.activePanel === "left" && !pendingInput && !syncPhase}
           expandedFolders={state.expandedFolders}
           height={panelHeight}
+          scrollHint={scrollHint}
         />
         <RightPanel
           testCase={selectedTestCase?.testCase ?? null}
@@ -340,6 +407,7 @@ function App({
         stats={stats}
         syncMessage={syncMessage}
         searchQuery={searchQuery}
+        pendingPrefix={gPrefix ? "g" : zPrefix ? "z" : undefined}
       />
       {pendingInput && (
         <TextInputOverlay
@@ -357,10 +425,11 @@ export interface RenderPlayTUIOptions {
   client: ZephyrV2Client;
   projectKey: string;
   filter?: FilterSpec;
+  jiraBaseUrl?: string;
 }
 
 export function renderPlayTUI(options: RenderPlayTUIOptions): void {
-  const { filePath, client, projectKey, filter } = options;
+  const { filePath, client, projectKey, filter, jiraBaseUrl } = options;
 
   const snapshot = readSnapshot(filePath);
   const filteredIndices = applyFilter(snapshot.testCases, filter);
@@ -378,6 +447,7 @@ export function renderPlayTUI(options: RenderPlayTUIOptions): void {
       initialSnapshot={snapshot}
       filteredIndices={filteredIndices}
       filter={filter}
+      jiraBaseUrl={jiraBaseUrl}
     />,
     { exitOnCtrlC: true },
   );

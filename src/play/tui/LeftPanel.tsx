@@ -1,4 +1,5 @@
 import { Box, Text } from "ink";
+import { useRef } from "react";
 import type { FlatListItem } from "./lib/types";
 
 interface LeftPanelProps {
@@ -7,6 +8,7 @@ interface LeftPanelProps {
   isFocused: boolean;
   expandedFolders: Set<string>;
   height: number;
+  scrollHint?: "center" | "top" | null;
 }
 
 function statusColor(status: string | null): string {
@@ -35,13 +37,35 @@ function statusLabel(status: string | null): string {
   }
 }
 
-export function LeftPanel({ items, cursor, isFocused, expandedFolders, height }: LeftPanelProps) {
-  // Viewport scrolling
+export function LeftPanel({
+  items,
+  cursor,
+  isFocused,
+  expandedFolders,
+  height,
+  scrollHint,
+}: LeftPanelProps) {
+  // Viewport scrolling with persistent offset
   const visibleCount = Math.max(1, height - 2);
-  let scrollOffset = 0;
-  if (cursor >= visibleCount) {
-    scrollOffset = cursor - visibleCount + 1;
+  const scrollRef = useRef(0);
+
+  if (scrollHint === "center") {
+    scrollRef.current = Math.max(0, cursor - Math.floor(visibleCount / 2));
+  } else if (scrollHint === "top") {
+    scrollRef.current = cursor;
+  } else {
+    // Only adjust when cursor goes out of visible range
+    if (cursor < scrollRef.current) {
+      scrollRef.current = cursor;
+    } else if (cursor >= scrollRef.current + visibleCount) {
+      scrollRef.current = cursor - visibleCount + 1;
+    }
   }
+  // Clamp
+  scrollRef.current = Math.min(scrollRef.current, Math.max(0, items.length - visibleCount));
+  scrollRef.current = Math.max(0, scrollRef.current);
+
+  const scrollOffset = scrollRef.current;
   const visibleItems = items.slice(scrollOffset, scrollOffset + visibleCount);
 
   return (
