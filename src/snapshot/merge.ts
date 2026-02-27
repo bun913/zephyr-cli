@@ -1,4 +1,9 @@
-import type { FetchedCycleData, FetchedExecutionStep, FetchedTestStep } from "./fetch";
+import type {
+  FetchedCycleData,
+  FetchedExecutionStep,
+  FetchedSingleTestCaseData,
+  FetchedTestStep,
+} from "./fetch";
 import { calcOriginalIndex } from "./fractional-index";
 import type { Snapshot, SnapshotExecution, SnapshotStep, SnapshotTestCase } from "./types";
 
@@ -162,4 +167,36 @@ export function mergeSnapshot(local: Snapshot, data: FetchedCycleData): MergeRes
   };
 
   return { snapshot, added, removed, updated };
+}
+
+/**
+ * Reload a single test case in the snapshot from fetched data.
+ * Updates test case details, steps, and folder path. Preserves execution, originalIndex, and excluded.
+ */
+export function reloadTestCase(
+  snapshot: Snapshot,
+  testCaseKey: string,
+  data: FetchedSingleTestCaseData,
+): Snapshot {
+  const newTestCases = snapshot.testCases.map((tc) => {
+    if (tc.key !== testCaseKey) return tc;
+
+    const { testCase, testCaseSteps, executionSteps, folders, statusMap } = data;
+    return {
+      ...tc,
+      name: testCase.name,
+      objective: testCase.objective,
+      precondition: testCase.precondition,
+      estimatedTime: testCase.estimatedTime,
+      labels: testCase.labels,
+      component: testCase.component,
+      customFields: testCase.customFields,
+      folderId: testCase.folderId,
+      folderPath: buildFolderPath(testCase.folderId, folders),
+      createdAt: testCase.createdOn,
+      steps: buildSteps(testCaseSteps, executionSteps, statusMap),
+    };
+  });
+
+  return { ...snapshot, exportedAt: new Date().toISOString(), testCases: newTestCases };
 }
