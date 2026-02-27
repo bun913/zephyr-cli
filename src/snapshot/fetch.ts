@@ -348,3 +348,65 @@ export async function fetchCycleData(
     statusMap,
   };
 }
+
+export interface FetchedSingleTestCaseData {
+  testCase: FetchedTestCase;
+  testCaseSteps: FetchedTestStep[];
+  executionSteps: FetchedExecutionStep[];
+  folders: Map<number, { id: number; name: string; parentId: number | null }>;
+  statusMap: Map<number, string>;
+}
+
+/**
+ * Fetch data for a single test case (for partial reload).
+ */
+export async function fetchSingleTestCaseData(
+  client: ZephyrV2Client,
+  projectKey: string,
+  testCaseKey: string,
+  executionId: number | null,
+): Promise<FetchedSingleTestCaseData> {
+  const statusMap = await fetchAllStatuses(client, projectKey);
+
+  const tcResponse = await client.testcases.getTestCase(testCaseKey);
+  const tc = tcResponse.data;
+  const testCase: FetchedTestCase = {
+    key: tc.key,
+    name: tc.name,
+    objective: tc.objective ?? "",
+    precondition: tc.precondition ?? "",
+    estimatedTime: tc.estimatedTime ?? null,
+    labels: (tc.labels as string[]) ?? [],
+    component: (tc.component as { name?: string } | null)?.name ?? null,
+    customFields: (tc.customFields as Record<string, unknown>) ?? {},
+    folderId: tc.folder?.id ?? null,
+    createdOn: tc.createdOn ?? "",
+  };
+
+  const testCaseSteps = await fetchTestCaseSteps(client, testCaseKey);
+
+  let executionSteps: FetchedExecutionStep[] = [];
+  if (executionId !== null) {
+    executionSteps = await fetchExecutionSteps(client, executionId);
+  }
+
+  // Fetch folder chain
+  const folders = new Map<number, { id: number; name: string; parentId: number | null }>();
+  const foldersToFetch = testCase.folderId !== null ? [testCase.folderId] : [];
+  while (foldersToFetch.length > 0) {
+    const folderId = foldersToFetch.pop();
+    if (folderId === undefined || folders.has(folderId)) continue;
+    const folderResponse = await client.folders.getFolder(folderId);
+    const folder = folderResponse.data;
+    folders.set(folderId, {
+      id: folder.id,
+      name: folder.name,
+      parentId: folder.parentId ?? null,
+    });
+    if (folder.parentId && !folders.has(folder.parentId)) {
+      foldersToFetch.push(folder.parentId);
+    }
+  }
+
+  return { testCase, testCaseSteps, executionSteps, folders, statusMap };
+}

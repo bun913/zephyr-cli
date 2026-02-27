@@ -68,15 +68,16 @@ function App({
     return indices;
   }, [searchQuery, state.flatListItems]);
 
-  const { pushStep, pushAllSteps, pushExecution, syncSnapshot } = useApiActions({
-    client,
-    projectKey,
-    filePath,
-    getSnapshot: () => snapshotRef.current,
-    updateSnapshot: actions.updateSnapshot,
-    setLoading: actions.setLoading,
-    setError: actions.setError,
-  });
+  const { pushStep, pushAllSteps, pushExecution, syncSnapshot, reloadSingleTestCase } =
+    useApiActions({
+      client,
+      projectKey,
+      filePath,
+      getSnapshot: () => snapshotRef.current,
+      updateSnapshot: actions.updateSnapshot,
+      setLoading: actions.setLoading,
+      setError: actions.setError,
+    });
 
   const [pendingInput, setPendingInput] = useState<InputMode | null>(null);
   const [syncPhase, setSyncPhase] = useState<SyncPhase>(null);
@@ -336,10 +337,31 @@ function App({
         return;
       }
 
-      // Sync: Shift+S
-      if (input === "S") {
+      // Reload single test case: r
+      if (input === "r" && selectedTestCase) {
+        const tc = selectedTestCase.testCase;
+        setSyncMessage(`Reloading ${tc.key}...`);
+        reloadSingleTestCase(tc.key, tc.execution.id)
+          .then((updated) => {
+            const newIndices = applyFilter(updated.testCases, filter);
+            setCurrentFilteredIndices(newIndices);
+            setSyncMessage(`Reloaded: ${tc.key}`);
+            if (syncMessageTimerRef.current) clearTimeout(syncMessageTimerRef.current);
+            syncMessageTimerRef.current = setTimeout(() => setSyncMessage(undefined), 3000);
+          })
+          .catch((error) => {
+            setSyncMessage(undefined);
+            actions.setError(
+              `Reload failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+            );
+          });
+        return;
+      }
+
+      // Reload all (full sync): R
+      if (input === "R") {
         setSyncPhase("confirm");
-        setSyncMessage("Sync now? (y/n)");
+        setSyncMessage("Reload all? (y/n)");
         return;
       }
 

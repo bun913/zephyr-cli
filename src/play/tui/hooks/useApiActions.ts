@@ -1,8 +1,8 @@
 import { useCallback, useRef } from "react";
 import type { ZephyrV2Client } from "zephyr-api-client";
-import { fetchCycleData } from "../../../snapshot/fetch";
+import { fetchCycleData, fetchSingleTestCaseData } from "../../../snapshot/fetch";
 import { readSnapshot, writeSnapshot } from "../../../snapshot/file";
-import { type MergeResult, mergeSnapshot } from "../../../snapshot/merge";
+import { type MergeResult, mergeSnapshot, reloadTestCase } from "../../../snapshot/merge";
 import { pushExecutionStatus, pushStepResults } from "../../../snapshot/push";
 import type { Snapshot, SnapshotStep } from "../../../snapshot/types";
 
@@ -243,5 +243,17 @@ export function useApiActions(options: UseApiActionsOptions) {
     [client, projectKey, filePath, updateSnapshot],
   );
 
-  return { pushStep, pushAllSteps, pushExecution, syncSnapshot };
+  const reloadSingleTestCase = useCallback(
+    async (testCaseKey: string, executionId: number | null): Promise<Snapshot> => {
+      const snapshot = readSnapshot(filePath);
+      const data = await fetchSingleTestCaseData(client, projectKey, testCaseKey, executionId);
+      const updated = reloadTestCase(snapshot, testCaseKey, data);
+      writeSnapshot(filePath, updated);
+      updateSnapshot(updated);
+      return updated;
+    },
+    [client, projectKey, filePath, updateSnapshot],
+  );
+
+  return { pushStep, pushAllSteps, pushExecution, syncSnapshot, reloadSingleTestCase };
 }

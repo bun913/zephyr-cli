@@ -70,7 +70,7 @@ export function StatusBar({
         ) : (
           <Text dimColor>
             {activePanel === "right" ? "p/f/b:step P/F/B:case" : "p/f/b:all"} o:open player e:edit
-            case S:sync
+            case r:reload R:reload all
           </Text>
         )}
       </Box>
