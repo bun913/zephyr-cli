@@ -10,6 +10,12 @@ export interface Snapshot {
 export interface SnapshotTestCase {
   key: string;
   name: string;
+  objective: string;
+  precondition: string;
+  estimatedTime: number | null;
+  labels: string[];
+  component: string | null;
+  customFields: Record<string, unknown>;
   folderId: number | null;
   folderPath: string;
   createdAt: string;

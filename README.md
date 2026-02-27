@@ -160,6 +160,55 @@ zephyr snapshot record snapshot.json CPG-T1 --step 1 --status Fail --actual-resu
 | `--step <index>` | Step index (0-based) to update instead of the whole execution |
 | `--actual-result <text>` | Actual result text (step level only) |
 
+### Play (Interactive TUI)
+
+Interactively record test results in a terminal UI. Requires a snapshot file created by `snapshot sync`.
+
+```bash
+zephyr play snapshot.json
+zephyr play snapshot.json --filter "unexecuted"
+zephyr play snapshot.json --filter "folder=login"
+zephyr play snapshot.json --filter "status=Fail"
+```
+
+#### Key Bindings
+
+| Key | Context | Action |
+|-----|---------|--------|
+| `j`/`k` | Both panels | Move cursor up/down |
+| `Tab` | Both panels | Switch between left/right panels |
+| `l`/`Enter` | Left panel | Open test case detail |
+| `h` | Right panel | Back to left panel |
+| `.` | Left panel | Toggle all folders open/close |
+| `p`/`f`/`b` | Left panel | Set **all steps** to Pass/Fail/Blocked |
+| `p`/`f`/`b` | Right panel | Set **current step** to Pass/Fail/Blocked |
+| `P`/`F`/`B` | Right panel | Set **execution status** to Pass/Fail/Blocked |
+| `Enter` | Right panel | Edit step actual result (text input) |
+| `/` | Both panels | Search by key/name/folder (jump to match) |
+| `n`/`N` | Both panels | Jump to next/previous search match |
+| `gg` | Both panels | Jump to top |
+| `G` | Both panels | Jump to bottom |
+| `zz` | Both panels | Scroll current line to center |
+| `zt` | Both panels | Scroll current line to top |
+| `o` | Both panels | Copy test case key to clipboard & open Test Player (requires `jiraBaseUrl`) |
+| `S` | Both panels | Sync snapshot from Zephyr API |
+| `q` | Both panels | Quit |
+
+Step status is automatically derived to the execution level:
+- Any step **Blocked** → execution = Blocked
+- Any step **Fail** → execution = Fail
+- All steps **Pass** → execution = Pass
+
+### Open
+
+Open a Zephyr resource in your browser. Requires `jiraBaseUrl` in your profile.
+
+```bash
+zephyr open CPG-T1    # Open test case
+zephyr open CPG-R1    # Open test cycle
+zephyr open CPG-P1    # Open test plan
+```
+
 ## Commands
 
 | Command | Subcommands | Description |
@@ -176,6 +225,8 @@ zephyr snapshot record snapshot.json CPG-T1 --step 1 --status Fail --actual-resu
 | `project` | list, get | Get projects |
 | `issuelink` | testcases, testcycles, testplans, executions | Get resources linked to Jira issues |
 | `snapshot` | sync, sort, record | Export, manage, and record results for local test cycle snapshots |
+| `play` | — | Interactive TUI for recording test results |
+| `open` | — | Open Zephyr resource in browser |
 
 ## Setup
 
@@ -189,11 +240,14 @@ Create `~/.zephyr/config.json`:
   "profiles": {
     "default": {
       "apiToken": "YOUR_ZEPHYR_API_TOKEN",
-      "projectKey": "YOUR_PROJECT_KEY"
+      "projectKey": "YOUR_PROJECT_KEY",
+      "jiraBaseUrl": "https://your-domain.atlassian.net"
     }
   }
 }
 ```
+
+`jiraBaseUrl` is optional but required for `open` command and `o` key in `play` TUI.
 
 ### 2. Get API Token
 

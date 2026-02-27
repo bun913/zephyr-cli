@@ -14,6 +14,12 @@ export interface FetchedExecution {
 export interface FetchedTestCase {
   key: string;
   name: string;
+  objective: string;
+  precondition: string;
+  estimatedTime: number | null;
+  labels: string[];
+  component: string | null;
+  customFields: Record<string, unknown>;
   folderId: number | null;
   createdOn: string;
 }
@@ -256,6 +262,12 @@ export async function fetchCycleData(
       testCases.set(key, {
         key: tc.key,
         name: tc.name,
+        objective: tc.objective ?? "",
+        precondition: tc.precondition ?? "",
+        estimatedTime: tc.estimatedTime ?? null,
+        labels: (tc.labels as string[]) ?? [],
+        component: (tc.component as { name?: string } | null)?.name ?? null,
+        customFields: (tc.customFields as Record<string, unknown>) ?? {},
         folderId: tc.folder?.id ?? null,
         createdOn: tc.createdOn ?? "",
       });
