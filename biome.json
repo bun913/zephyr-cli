@@ -24,6 +24,6 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["src/**/*", "test/**/*", "*.ts", "*.json"]
+    "includes": ["src/**/*.ts", "test/**/*.ts"]
   }
 }
