@@ -259,16 +259,29 @@ function App({
         } else {
           const base = jiraBaseUrl.replace(/\/+$/, "");
           const cycleKey = state.snapshot.testCycleKey;
-          // assignedTestCaseId is an internal Zephyr UI ID not available via REST API v2
-          // Open test player at cycle level; user selects test case in the UI
+          const testCaseKey = selectedTestCase.testCase.key;
           const url = `${base}/projects/${projectKey}?selectedItem=com.atlassian.plugins.atlassian-connect-plugin:com.kanoah.test-manager__main-project-page#!/v2/testPlayer/${cycleKey}`;
-          const cmd =
+
+          // Copy test case key to clipboard for pasting into the search box
+          const clipCmd =
+            process.platform === "darwin"
+              ? "pbcopy"
+              : process.platform === "win32"
+                ? "clip"
+                : "xclip -selection clipboard";
+          exec(`printf '%s' "${testCaseKey}" | ${clipCmd}`);
+
+          const openCmd =
             process.platform === "darwin"
               ? `open "${url}"`
               : process.platform === "win32"
                 ? `start "" "${url}"`
                 : `xdg-open "${url}"`;
-          exec(cmd);
+          exec(openCmd);
+
+          setSyncMessage(`Copied "${testCaseKey}" - paste in Search box`);
+          if (syncMessageTimerRef.current) clearTimeout(syncMessageTimerRef.current);
+          syncMessageTimerRef.current = setTimeout(() => setSyncMessage(undefined), 10000);
         }
         return;
       }
