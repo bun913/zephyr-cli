@@ -1,4 +1,5 @@
 import type { Command } from "commander";
+import { registerRecordCommand } from "./record";
 import { registerSortCommand } from "./sort";
 import { registerSyncCommand } from "./sync";
 
@@ -7,4 +8,5 @@ export function registerSnapshotCommand(program: Command): void {
 
   registerSyncCommand(snapshot);
   registerSortCommand(snapshot);
+  registerRecordCommand(snapshot);
 }
