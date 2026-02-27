@@ -190,7 +190,7 @@ zephyr play snapshot.json --filter "status=Fail"
 | `G` | Both panels | Jump to bottom |
 | `zz` | Both panels | Scroll current line to center |
 | `zt` | Both panels | Scroll current line to top |
-| `o` | Both panels | Open test case in browser (requires `jiraBaseUrl`) |
+| `o` | Both panels | Copy test case key to clipboard & open Test Player (requires `jiraBaseUrl`) |
 | `S` | Both panels | Sync snapshot from Zephyr API |
 | `q` | Both panels | Quit |
 
