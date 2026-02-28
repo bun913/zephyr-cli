@@ -86,6 +86,7 @@ export function LeftPanel({
           return (
             <Box key={`folder-${item.path}`}>
               <Text
+                wrap="truncate"
                 backgroundColor={isSelected && isFocused ? "cyan" : undefined}
                 color={isSelected && isFocused ? "black" : undefined}
               >
@@ -99,11 +100,11 @@ export function LeftPanel({
         const tc = item.testCase;
         const execStatus = tc.execution.status;
         const marker = execStatus && execStatus !== "Not Executed" ? "●" : "○";
-        const displayName = tc.name.length > 25 ? `${tc.name.slice(0, 22)}...` : tc.name;
 
         return (
           <Box key={`tc-${item.index}`}>
             <Text
+              wrap="truncate"
               backgroundColor={isSelected && isFocused ? "cyan" : undefined}
               color={isSelected && isFocused ? "black" : undefined}
             >
@@ -111,7 +112,7 @@ export function LeftPanel({
               <Text color={isSelected && isFocused ? "black" : statusColor(execStatus)}>
                 {marker}
               </Text>{" "}
-              {tc.key} {displayName}
+              {tc.key} {tc.name}
               {"  "}
               <Text color={isSelected && isFocused ? "black" : statusColor(execStatus)}>
                 {statusLabel(execStatus)}
