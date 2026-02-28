@@ -72,10 +72,7 @@ export function flattenTree(
     });
 
     if (isExpanded) {
-      // Add child folders
-      items.push(...flattenTree(node.children, expandedFolders, testCases, depth + 1));
-
-      // Add test cases at this folder level
+      // Add test cases first at this folder level
       for (const tcIdx of node.testCases) {
         const tc = testCases[tcIdx];
         items.push({
@@ -85,6 +82,9 @@ export function flattenTree(
           testCase: tc,
         });
       }
+
+      // Add child folders after test cases
+      items.push(...flattenTree(node.children, expandedFolders, testCases, depth + 1));
     }
   }
 
