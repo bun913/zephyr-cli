@@ -296,14 +296,23 @@ function App({
 
           // Copy test case key to clipboard for pasting into the search box
           if (process.platform === "darwin") {
-            execFile("pbcopy", [], (err) => err && actions.setError(`Clipboard failed: ${err.message}`))
-              .stdin?.end(testCaseKey);
+            execFile(
+              "pbcopy",
+              [],
+              (err) => err && actions.setError(`Clipboard failed: ${err.message}`),
+            ).stdin?.end(testCaseKey);
           } else if (process.platform === "win32") {
-            execFile("clip", [], (err) => err && actions.setError(`Clipboard failed: ${err.message}`))
-              .stdin?.end(testCaseKey);
+            execFile(
+              "clip",
+              [],
+              (err) => err && actions.setError(`Clipboard failed: ${err.message}`),
+            ).stdin?.end(testCaseKey);
           } else {
-            execFile("xclip", ["-selection", "clipboard"], (err) => err && actions.setError(`Clipboard failed: ${err.message}`))
-              .stdin?.end(testCaseKey);
+            execFile(
+              "xclip",
+              ["-selection", "clipboard"],
+              (err) => err && actions.setError(`Clipboard failed: ${err.message}`),
+            ).stdin?.end(testCaseKey);
           }
 
           if (process.platform === "darwin") {
