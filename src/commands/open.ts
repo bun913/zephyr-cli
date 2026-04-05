@@ -1,4 +1,4 @@
-import { exec } from "node:child_process";
+import { execFile } from "node:child_process";
 import type { Command } from "commander";
 import { getProfile, loadConfig } from "../config/manager";
 import type { GlobalOptions } from "../config/types";
@@ -30,18 +30,22 @@ function buildZephyrUrl(
 function openInBrowser(url: string): void {
   const platform = process.platform;
   let command: string;
+  let args: string[];
 
   if (platform === "darwin") {
-    command = `open "${url}"`;
+    command = "open";
+    args = [url];
   } else if (platform === "linux") {
-    command = `xdg-open "${url}"`;
+    command = "xdg-open";
+    args = [url];
   } else if (platform === "win32") {
-    command = `start "" "${url}"`;
+    command = "cmd";
+    args = ["/c", "start", "", url];
   } else {
     throw new Error(`Unsupported platform: ${platform}. Please open manually:\n${url}`);
   }
 
-  exec(command, (error) => {
+  execFile(command, args, (error) => {
     if (error) {
       logger.error(`Failed to open browser: ${error.message}`);
       console.log(`URL: ${url}`);

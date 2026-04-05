@@ -1,4 +1,4 @@
-import { exec } from "node:child_process";
+import { execFile } from "node:child_process";
 import { Box, render, useApp, useInput, useStdout } from "ink";
 import { useCallback, useMemo, useRef, useState } from "react";
 import type { ZephyrV2Client } from "zephyr-api-client";
@@ -295,21 +295,24 @@ function App({
           const url = `${base}/projects/${projectKey}?selectedItem=com.atlassian.plugins.atlassian-connect-plugin:com.kanoah.test-manager__main-project-page#!/v2/testPlayer/${cycleKey}`;
 
           // Copy test case key to clipboard for pasting into the search box
-          const clipCmd =
-            process.platform === "darwin"
-              ? "pbcopy"
-              : process.platform === "win32"
-                ? "clip"
-                : "xclip -selection clipboard";
-          exec(`printf '%s' "${testCaseKey}" | ${clipCmd}`);
+          if (process.platform === "darwin") {
+            execFile("pbcopy", [], (err) => err && actions.setError(`Clipboard failed: ${err.message}`))
+              .stdin?.end(testCaseKey);
+          } else if (process.platform === "win32") {
+            execFile("clip", [], (err) => err && actions.setError(`Clipboard failed: ${err.message}`))
+              .stdin?.end(testCaseKey);
+          } else {
+            execFile("xclip", ["-selection", "clipboard"], (err) => err && actions.setError(`Clipboard failed: ${err.message}`))
+              .stdin?.end(testCaseKey);
+          }
 
-          const openCmd =
-            process.platform === "darwin"
-              ? `open "${url}"`
-              : process.platform === "win32"
-                ? `start "" "${url}"`
-                : `xdg-open "${url}"`;
-          exec(openCmd);
+          if (process.platform === "darwin") {
+            execFile("open", [url]);
+          } else if (process.platform === "win32") {
+            execFile("cmd", ["/c", "start", "", url]);
+          } else {
+            execFile("xdg-open", [url]);
+          }
 
           setSyncMessage(`Copied "${testCaseKey}" - paste in Search box`);
           if (syncMessageTimerRef.current) clearTimeout(syncMessageTimerRef.current);
@@ -326,13 +329,13 @@ function App({
           const base = jiraBaseUrl.replace(/\/+$/, "");
           const testCaseKey = selectedTestCase.testCase.key;
           const url = `${base}/projects/${projectKey}?selectedItem=com.atlassian.plugins.atlassian-connect-plugin:com.kanoah.test-manager__main-project-page#!/v2/testCase/${testCaseKey}`;
-          const openCmd =
-            process.platform === "darwin"
-              ? `open "${url}"`
-              : process.platform === "win32"
-                ? `start "" "${url}"`
-                : `xdg-open "${url}"`;
-          exec(openCmd);
+          if (process.platform === "darwin") {
+            execFile("open", [url]);
+          } else if (process.platform === "win32") {
+            execFile("cmd", ["/c", "start", "", url]);
+          } else {
+            execFile("xdg-open", [url]);
+          }
         }
         return;
       }
