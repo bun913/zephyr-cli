@@ -137,7 +137,7 @@ jobs:
 
       - name: Ad-hoc sign binary
         if: runner.os == 'macOS'
-        run: codesign -s - ${{ matrix.artifact }}
+        run: codesign --force -s - ${{ matrix.artifact }}
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v1
