@@ -98,16 +98,12 @@ jobs:
       matrix:
         include:
           - os: macos-latest
-            target: darwin-arm64
             artifact: zephyr-macos-arm64
-          - os: macos-latest
-            target: darwin-x64
+          - os: macos-26-intel
             artifact: zephyr-macos-x64
           - os: ubuntu-latest
-            target: linux-x64
             artifact: zephyr-linux-x64
           - os: windows-latest
-            target: windows-x64
             artifact: zephyr-windows-x64.exe
 
     steps:
@@ -137,7 +133,7 @@ jobs:
         run: bun install
 
       - name: Build binary
-        run: bun build src/index.ts --compile --target=bun-${{ matrix.target }} --outfile ${{ matrix.artifact }}
+        run: bun build src/index.ts --compile --outfile ${{ matrix.artifact }}
 
       - name: Ad-hoc sign binary
         if: runner.os == 'macOS'
