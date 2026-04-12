@@ -26,7 +26,7 @@ function main() {
   program
     .name("zephyr")
     .description("CLI tool for Zephyr Scale API")
-    .version("1.2.5")
+    .version("1.2.6")
     .option("-p, --profile <name>", "Profile name to use", "default")
     .option("-c, --config <path>", "Custom configuration file path")
     .option("--text", "Output in human-readable text format (default is JSON)")
