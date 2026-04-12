@@ -139,6 +139,10 @@ jobs:
       - name: Build binary
         run: bun build src/index.ts --compile --target=bun-${{ matrix.target }} --outfile ${{ matrix.artifact }}
 
+      - name: Ad-hoc sign binary
+        if: runner.os == 'macOS'
+        run: codesign -s - ${{ matrix.artifact }}
+
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v1
         with:
